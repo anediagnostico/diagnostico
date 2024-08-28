@@ -1,0 +1,13 @@
+# ~/.streamlit/config.toml
+
+[server]
+# Permite que a página do Streamlit seja automaticamente atualizada quando o código-fonte for alterado
+runOnSave = true
+
+[runner]
+# Permite que a aplicação continue rodando enquanto está atualizando
+magicEnabled = true
+liveFileWatcher = true
+
+# Define o intervalo em que o Streamlit verifica por alterações no código-fonte
+liveFileWatcherPollInterval = 0.1
