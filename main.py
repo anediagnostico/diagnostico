@@ -33,17 +33,24 @@ engine = create_engine(connection_string)
 #     print(f"Erro ao conectar ao banco de dados: {e}")
 
 # ------------------------- INTERFACE GRÁFICA --------------------------
+
+st.set_page_config(
+    page_title="Relatório de Sondagens",  # Título da aba do navegador
+    page_icon="📊",  # Ícone da aba do navegador
+    layout="wide",  # Layout amplo
+    initial_sidebar_state="expanded",  # Estado inicial da barra lateral (expanded/collapsed)
+)
 st.markdown("## Dashboard da Sondagem Diagnóstica 🎈")
 st.sidebar.markdown("# Página Principal do Relatório 🎈")
 st.sidebar.markdown('## Seus filtros estão aqui! ✅')
-st.markdown("### Dados de Diagnóstico")
 # modify = st.sidebar.checkbox("Adicionar Filtros")
 
 
 # ------------------------- SQL QUERIES --------------------------------
-logins_query = "SELECT COUNT(*) AS total_logins FROM teacher"
-onboardings_query = "SELECT COUNT(*) AS total_onboardings FROM teacher WHERE onboarding_completed = 1;"
-students_query = "SELECT COUNT(*) AS total_students FROM student;"
+logins_query = "SELECT COUNT(distinct t.auth_id) AS total_logins FROM teacher t"
+onboardings_query = "SELECT COUNT(t.auth_id) AS total_onboardings FROM teacher t WHERE t.onboarding_completed = 1;"
+students_query = "SELECT COUNT(distinct s.id) AS total_students FROM student s WHERE s.active = 1;"
+diagnostics_query = "SELECT COUNT(distinct da.id) AS total_diagnosis FROM diagnostic_assessment da;"	
 classes_query = "SELECT COUNT(*) AS total_classes FROM class;"
 students_by_class_query = """SELECT
     t.id AS id_professor,
@@ -157,6 +164,7 @@ HAVING
 logins = pd.read_sql(logins_query, engine)
 onboardings = pd.read_sql(onboardings_query, engine)
 students = pd.read_sql(students_query, engine)
+diagnosis = pd.read_sql(diagnostics_query, engine)
 classes = pd.read_sql(classes_query, engine)
 students_by_class = pd.read_sql(students_by_class_query, engine)
 evolucao = pd.read_sql(evolucao_total, engine)
@@ -254,13 +262,15 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 # ------------------------- RELATÓRIO ----------------------------------
-st.title("Relatório Diagnóstico")
 
 st.subheader("Métricas Gerais")
+st.markdown("#### As métricas abaixo apresentam os totais gerais (sem considerar filtragem de dados):")
 st.write("Quantidade de Logins:", logins['total_logins'].iloc[0])
 st.write("Quantidade de Onboardings:", onboardings['total_onboardings'].iloc[0])
+st.write("Quantidade de Sondagens:", diagnosis['total_diagnosis'].iloc[0])
 st.write("Quantidade de Alunos Inscritos:", students['total_students'].iloc[0])
 st.write("Quantidade de Turmas:", classes['total_classes'].iloc[0])
+st.write("Quantidade de Turmas com Mais de 1 Sondagem:", contagem_turmas_mais_de_uma_sondagem['total_classes_with_multiple_assessments'].sum())
 
 st.subheader("Alunos por Turma e Professor")
 filtered = filter_dataframe(students_by_class)
@@ -272,13 +282,18 @@ df['id_turma'] = df['id_turma'].astype(int)
 df['ano_turma'] = df['ano_turma'].astype(int)
 df['id_aluno'] = df['id_aluno'].astype(int)
 df['cod_inep'] = df['cod_inep'].astype(int)
+df['id_avaliacao'] = df['id_avaliacao'].astype(int)
 
 df['id_professor'] = df['id_professor'].apply(lambda x: f'{x:,}'.replace(',', ''))
 df['id_turma'] = df['id_turma'].apply(lambda x: f'{x:,}'.replace(',', ''))
 df['ano_turma'] = df['ano_turma'].apply(lambda x: f'{x:,}'.replace(',', ''))
 df['id_aluno'] = df['id_aluno'].apply(lambda x: f'{x:,}'.replace(',', ''))
 df['cod_inep'] = df['cod_inep'].apply(lambda x: f'{x:,}'.replace(',', ''))
-st.dataframe(df)
+df['id_avaliacao'] = df['id_avaliacao'].apply(lambda x: f'{x:,}'.replace(',', ''))
+
+with st.expander("Clique aqui para visualizar os microdados"):
+    st.dataframe(df)
+
 
 st.title("Evolução dos Alunos com Datas")
 st.write("Aqui estão os alunos que mostraram evolução ao longo do tempo:")
