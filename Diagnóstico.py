@@ -123,7 +123,7 @@ FROM (
         das.student_id
     HAVING
         MIN(dh.ordering) <> MAX(dh.ordering)
-        AND COUNT(DISTINCT das.created_at) > 1  -- Garantir que as sondagens ocorreram em diferentes datas
+        AND COUNT(DISTINCT das.created_at) > 1 
 ) AS evolved_students;'''
 
 alunos_distintos_evolucao = '''SELECT

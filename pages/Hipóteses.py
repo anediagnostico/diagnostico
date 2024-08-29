@@ -164,49 +164,153 @@ resumo_hipoteses = filtered_df.groupby(['rn', 'nome_hipotese']).size().unstack(f
 st.write("Resumo de Hipóteses por Ranking:")
 st.dataframe(resumo_hipoteses)
 
-ranking_desejado = 1
-df_filtered = df[df['rn'] == ranking_desejado]
+df = pd.read_sql(query, engine)
 
-# Resumo das hipóteses para o ranking desejado
-resumo_hipoteses = df_filtered['nome_hipotese'].value_counts()
+# Tratar colunas que são inteiros
+integer_columns = ['student_id', 'class_id', 'ano_turma', 'cod_inep', 'rn']
+for col in integer_columns:
+    if col in df.columns:
+        df[col] = df[col].astype(int)
 
-# Calcula o total acumulado das hipóteses
-total_acumulado = resumo_hipoteses.sum()
+# Função para criar o gráfico de gauge
+def criar_gauge(df_filtered, ranking_desejado):
+    # Resumo das hipóteses para o ranking desejado
+    resumo_hipoteses = df_filtered['nome_hipotese'].value_counts()
+
+    # Calcula o total acumulado das hipóteses
+    total_acumulado = resumo_hipoteses.sum()
+
+    # Cria o gráfico de gauge com todas as hipóteses em um único gauge
+    steps = []
+    annotations = []
+    limite_inferior = 0
+
+    colors = ['lightgray', 'gray', 'yellow', 'orange', 'red']
+
+    for i, (hipotese, valor) in enumerate(resumo_hipoteses.items()):
+        limite_superior = limite_inferior + valor
+        steps.append({
+            'range': [limite_inferior, limite_superior],
+            'color': colors[i % len(colors)]
+        })
+        annotations.append(dict(
+            x=(limite_inferior + limite_superior) / 2 / total_acumulado,
+            y=0.2,
+            text=f'{hipotese} ({valor})',
+            showarrow=False,
+            font=dict(size=10)
+        ))
+        limite_inferior = limite_superior
+
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=total_acumulado,
+        title={'text': f"Total de Hipóteses - Ranking {ranking_desejado}"},
+        gauge={
+            'axis': {'range': [None, total_acumulado]},
+            'steps': steps,
+            'bar': {'color': "black"}
+        }
+    ))
+
+    # Adiciona anotações ao gráfico
+    fig.update_layout(annotations=annotations)
+
+    st.plotly_chart(fig)
 
 # Filtrar o DataFrame para o ranking desejado (rn=1)
 ranking_desejado = 1
+
+# Sidebar para filtros adicionais
+st.sidebar.title("Filtros")
+selected_turma = st.sidebar.multiselect("Filtrar por Turma:", df['nome_turma'].unique())
+selected_escola = st.sidebar.multiselect("Filtrar por Escola:", df['nome_escola'].unique())
+
+# Aplicar filtros
 df_filtered = df[df['rn'] == ranking_desejado]
 
-# Resumo das hipóteses para o ranking desejado
-resumo_hipoteses = df_filtered['nome_hipotese'].value_counts()
+if selected_turma:
+    df_filtered = df_filtered[df_filtered['nome_turma'].isin(selected_turma)]
 
-# Calcula o total acumulado das hipóteses
-total_acumulado = resumo_hipoteses.sum()
+if selected_escola:
+    df_filtered = df_filtered[df_filtered['nome_escola'].isin(selected_escola)]
 
-# Cria o gráfico de gauge com todas as hipóteses em um único gauge
-steps = []
-limite_inferior = 0
+# Criar e exibir o gráfico de gauge atualizado com os filtros aplicados
+st.title("Visualização do Resumo de Hipóteses por Ranking")
+criar_gauge(df_filtered, ranking_desejado)
 
-colors = ['lightgray', 'gray', 'yellow', 'orange', 'red']
+# Supondo que você já tenha carregado o DataFrame df com as colunas 'student_id', 'nome_hipotese', e 'rn'
 
-for i, (hipotese, valor) in enumerate(resumo_hipoteses.items()):
-    limite_superior = limite_inferior + valor
-    steps.append({
-        'range': [limite_inferior, limite_superior],
-        'color': colors[i % len(colors)]
-    })
-    limite_inferior = limite_superior
+# Criar um mapeamento para a ordem das hipóteses
+ordem_hipoteses = {
+    'Não se aplica': 1,
+    'Pré-silábica': 2,
+    'Silábica s/ valor': 3,
+    'Silábica c/ valor': 4,
+    'Silábico-alfabética': 5,
+    'Alfabética': 6
+}
 
-fig = go.Figure(go.Indicator(
-    mode="gauge+number",
-    value=total_acumulado,
-    title={'text': f"Total de Hipóteses - Ranking {ranking_desejado}"},
-    gauge={
-        'axis': {'range': [None, total_acumulado]},
-        'steps': steps,
-        'bar': {'color': "black"}  # Cor do ponteiro do gauge
-    }
-))
+# Adicionar uma coluna de ordem ao DataFrame
+df['ordering'] = df['nome_hipotese'].map(ordem_hipoteses)
 
-st.plotly_chart(fig)
+# Agrupar por aluno e calcular a primeira e a última hipótese
+progresso_alunos = df.groupby('student_id')['ordering'].agg(['min', 'max'])
 
+# Identificar alunos que tiveram qualquer melhoria
+alunos_com_melhoria = progresso_alunos[progresso_alunos['min'] < progresso_alunos['max']]
+
+# Contar o número total de alunos que tiveram melhoria
+total_alunos_com_melhoria = len(alunos_com_melhoria)
+
+# Mapeando cada etapa do funil
+funil_etapas = {}
+
+for etapa in ordem_hipoteses.keys():
+    etapa_order = ordem_hipoteses[etapa]
+    alunos_na_etapa = progresso_alunos[(progresso_alunos['min'] < etapa_order) & 
+                                       (progresso_alunos['max'] >= etapa_order)]
+    funil_etapas[etapa] = len(alunos_na_etapa)
+
+# Exibir resultados
+print(f"Total de alunos com qualquer melhoria: {total_alunos_com_melhoria}")
+print("Mapa de Funil de Progressão:")
+for etapa, quantidade in funil_etapas.items():
+    print(f"Alunos que atingiram {etapa}: {quantidade}")
+
+st.write(f"Total de alunos com qualquer melhoria: {total_alunos_com_melhoria}")
+
+st.write("Mapa de Funil de Progressão:")
+for etapa, quantidade in funil_etapas.items():
+    st.write(f"Alunos que atingiram {etapa}: {quantidade}")
+
+st.dataframe(alunos_com_melhoria)
+
+# Adicionar uma coluna de ordem ao DataFrame
+df['ordering'] = df['nome_hipotese'].map(ordem_hipoteses)
+
+# Agrupar por aluno e calcular a primeira e a última hipótese
+progresso_alunos = df.groupby('student_id')['ordering'].agg(['min', 'max'])
+
+# Identificar alunos que tiveram qualquer melhoria
+alunos_com_melhoria_ids = progresso_alunos[progresso_alunos['min'] < progresso_alunos['max']].index
+
+# Filtrar o DataFrame original para esses alunos
+alunos_com_melhoria = df[df['student_id'].isin(alunos_com_melhoria_ids)]
+
+# Ordenar os dados por aluno e pela ordem das hipóteses (rn)
+alunos_com_melhoria = alunos_com_melhoria.sort_values(by=['student_id', 'rn'])
+
+colunas_selecionadas = [
+    'student_id', 'nome_aluno', 'nome_turma', 'ano_turma',
+    'cod_inep', 'nome_escola', 'cidade_escola', 'estado_escola',
+    'nome_hipotese', 'rn', 'ordering', 'created_at'
+]
+
+alunos_com_melhoria_evolucao = alunos_com_melhoria[colunas_selecionadas]
+
+# Exibir a evolução no Streamlit
+import streamlit as st
+
+st.write("Evolução Completa dos Alunos com Melhoria:")
+st.dataframe(alunos_com_melhoria_evolucao)
