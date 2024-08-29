@@ -35,10 +35,10 @@ engine = create_engine(connection_string)
 # ------------------------- INTERFACE GRÁFICA --------------------------
 
 st.set_page_config(
-    page_title="Relatório de Sondagens",  # Título da aba do navegador
-    page_icon="📊",  # Ícone da aba do navegador
-    layout="wide",  # Layout amplo
-    initial_sidebar_state="expanded",  # Estado inicial da barra lateral (expanded/collapsed)
+    page_title="Relatório de Sondagens",  
+    page_icon="📊", 
+    layout="wide",  
+    initial_sidebar_state="expanded",  
 )
 st.markdown("## Dashboard da Sondagem Diagnóstica 🎈")
 st.sidebar.markdown("# Página Principal do Relatório 🎈")

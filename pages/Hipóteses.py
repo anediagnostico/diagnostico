@@ -164,24 +164,49 @@ resumo_hipoteses = filtered_df.groupby(['rn', 'nome_hipotese']).size().unstack(f
 st.write("Resumo de Hipóteses por Ranking:")
 st.dataframe(resumo_hipoteses)
 
-for rank in resumo_hipoteses.index:
-    for hipotese in resumo_hipoteses.columns:
-        valor = resumo_hipoteses.loc[rank, hipotese]
+ranking_desejado = 1
+df_filtered = df[df['rn'] == ranking_desejado]
 
-        fig = go.Figure(go.Indicator(
-            mode = "gauge+number",
-            value = valor,
-            title = {'text': f"{hipotese} - Ranking {rank}"},
-            gauge = {
-                'axis': {'range': [None, resumo_hipoteses.values.max()]},
-                'steps' : [
-                    {'range': [0, resumo_hipoteses.values.max()/5], 'color': "lightgray"},
-                    {'range': [resumo_hipoteses.values.max()/5, resumo_hipoteses.values.max()/2.5], 'color': "gray"},
-                    {'range': [resumo_hipoteses.values.max()/2.5, resumo_hipoteses.values.max()/1.66], 'color': "yellow"},
-                    {'range': [resumo_hipoteses.values.max()/1.66, resumo_hipoteses.values.max()/1.25], 'color': "orange"},
-                    {'range': [resumo_hipoteses.values.max()/1.25, resumo_hipoteses.values.max()], 'color': "red"}
-                ],
-            }
-        ))
+# Resumo das hipóteses para o ranking desejado
+resumo_hipoteses = df_filtered['nome_hipotese'].value_counts()
 
-        st.plotly_chart(fig)
+# Calcula o total acumulado das hipóteses
+total_acumulado = resumo_hipoteses.sum()
+
+# Filtrar o DataFrame para o ranking desejado (rn=1)
+ranking_desejado = 1
+df_filtered = df[df['rn'] == ranking_desejado]
+
+# Resumo das hipóteses para o ranking desejado
+resumo_hipoteses = df_filtered['nome_hipotese'].value_counts()
+
+# Calcula o total acumulado das hipóteses
+total_acumulado = resumo_hipoteses.sum()
+
+# Cria o gráfico de gauge com todas as hipóteses em um único gauge
+steps = []
+limite_inferior = 0
+
+colors = ['lightgray', 'gray', 'yellow', 'orange', 'red']
+
+for i, (hipotese, valor) in enumerate(resumo_hipoteses.items()):
+    limite_superior = limite_inferior + valor
+    steps.append({
+        'range': [limite_inferior, limite_superior],
+        'color': colors[i % len(colors)]
+    })
+    limite_inferior = limite_superior
+
+fig = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=total_acumulado,
+    title={'text': f"Total de Hipóteses - Ranking {ranking_desejado}"},
+    gauge={
+        'axis': {'range': [None, total_acumulado]},
+        'steps': steps,
+        'bar': {'color': "black"}  # Cor do ponteiro do gauge
+    }
+))
+
+st.plotly_chart(fig)
+
