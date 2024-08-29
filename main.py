@@ -143,6 +143,16 @@ GROUP BY
 HAVING
     COUNT(c.id) > 1;'''
 
+turmas_mais_de_uma_sondagem = '''SELECT
+    COUNT(DISTINCT da.class_id) AS total_classes_with_multiple_assessments
+FROM
+    diagnostic_assessment da
+GROUP BY
+    da.class_id
+HAVING
+    COUNT(da.id) > 1;
+'''
+
 # ------------------------- LEITURA DOS DADOS --------------------------
 logins = pd.read_sql(logins_query, engine)
 onboardings = pd.read_sql(onboardings_query, engine)
@@ -153,7 +163,7 @@ evolucao = pd.read_sql(evolucao_total, engine)
 contagem_evolucao = pd.read_sql(alunos_evolucao, engine)
 contagem_distinta_evolucao = pd.read_sql(alunos_distintos_evolucao, engine)
 contagem_professores_mais_de_uma_turma = pd.read_sql(professores_mais_de_uma_turma, engine)
-
+contagem_turmas_mais_de_uma_sondagem = pd.read_sql(turmas_mais_de_uma_sondagem, engine) 
 # ------------------------- FILTRAGEM DE DADOS -------------------------
 def format_integers(df: pd.DataFrame) -> pd.DataFrame:
     # Itera pelas colunas do DataFrame e converte para int se possível
@@ -292,3 +302,7 @@ st.write(f"Total de alunos distintos com evolução: {total_students_with_evolut
 st.title("Professores com mais de uma turma")
 total_profs_mais = len(contagem_professores_mais_de_uma_turma)
 st.write(f"Total de professores com mais de uma turma: {total_profs_mais}")
+
+st.title("Total de Trumas com mais de uma sondagem")
+total_turmas_mais = len(contagem_turmas_mais_de_uma_sondagem)
+st.write(f"Total de turmas com mais de uma sondagem: {total_turmas_mais}")
