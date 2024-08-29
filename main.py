@@ -160,6 +160,51 @@ HAVING
     COUNT(da.id) > 1;
 '''
 
+rank_hipoteses = '''WITH ranked_hypotheses AS (
+    SELECT
+        das.student_id,
+        s.name AS nome_aluno,
+        s.class_id,
+        c.name AS nome_turma,
+        c.year AS ano_turma,
+        sc.cod_inep AS cod_inep,
+        sc.name AS nome_escola,
+        sc.municipio AS cidade_escola,
+        sc.uf AS estado_escola,
+        dh.name AS nome_hipotese,
+        da.created_at,
+        ROW_NUMBER() OVER(PARTITION BY das.student_id ORDER BY da.created_at ASC) AS rn
+    FROM
+        diagnostic_assessment_students das
+    INNER JOIN
+        diagnostic_assessment da ON das.diagnostic_assessment_id = da.id
+    INNER JOIN
+        diagnostic_assessment_type_hypothesis dh ON das.hypothesis_id = dh.id
+    INNER JOIN
+        student s ON das.student_id = s.id
+    INNER JOIN
+        class c ON s.class_id = c.id
+    INNER JOIN
+        school sc ON c.cod_inep = sc.cod_inep
+)
+SELECT
+    rh.student_id,
+    rh.nome_aluno,
+    rh.nome_turma,
+    rh.ano_turma,
+    rh.cod_inep,
+    rh.nome_escola,
+    rh.cidade_escola,
+    rh.estado_escola,
+    rh.nome_hipotese,
+    rh.created_at,
+    rh.rn
+FROM
+    ranked_hypotheses rh
+ORDER BY
+    rh.student_id, rh.rn;
+'''
+
 # ------------------------- LEITURA DOS DADOS --------------------------
 logins = pd.read_sql(logins_query, engine)
 onboardings = pd.read_sql(onboardings_query, engine)
@@ -172,6 +217,7 @@ contagem_evolucao = pd.read_sql(alunos_evolucao, engine)
 contagem_distinta_evolucao = pd.read_sql(alunos_distintos_evolucao, engine)
 contagem_professores_mais_de_uma_turma = pd.read_sql(professores_mais_de_uma_turma, engine)
 contagem_turmas_mais_de_uma_sondagem = pd.read_sql(turmas_mais_de_uma_sondagem, engine) 
+rank_hipoteses = pd.read_sql(rank_hipoteses, engine)
 # ------------------------- FILTRAGEM DE DADOS -------------------------
 def format_integers(df: pd.DataFrame) -> pd.DataFrame:
     # Itera pelas colunas do DataFrame e converte para int se possível
@@ -295,6 +341,28 @@ with st.expander("Clique aqui para visualizar os microdados"):
     st.dataframe(df)
 
 
+st.write("Resumo dos Dados Filtrados:")
+
+
+total_alunos = df['id_aluno'].nunique()
+st.write(f"Total de Alunos: {total_alunos}")
+
+
+total_turmas = df['id_turma'].nunique()
+st.write(f"Total de Turmas: {total_turmas}")
+
+
+total_escolas = df['cod_inep'].nunique()
+st.write(f"Total de Escolas: {total_escolas}")
+
+
+resumo_hipoteses = df.groupby('id_aluno')['nome_hipotese'].first().value_counts()
+st.write("Resumo de Hipóteses (Alunos Únicos):")
+st.dataframe(resumo_hipoteses)
+
+st.title("Dados por Hipótese Atribuída aos Alunos")
+st.dataframe(rank_hipoteses)
+
 st.title("Evolução dos Alunos com Datas")
 st.write("Aqui estão os alunos que mostraram evolução ao longo do tempo:")
 evolucao['id_aluno'] = evolucao['id_aluno'].astype(int) 
@@ -302,11 +370,6 @@ evolucao['id_aluno'] = evolucao['id_aluno'].apply(lambda x: f'{x:,}'.replace(','
 
 st.dataframe(evolucao)
 
-
-# Contar o número de alunos com evolução
-# total_students_with_evolution = len(contagem_evolucao)
-
-# Exibir o número total e a tabela com detalhes
 st.title("Evolução dos Alunos")
 st.dataframe(contagem_evolucao)
 
