@@ -272,11 +272,6 @@ for etapa in ordem_hipoteses.keys():
                                        (progresso_alunos['max'] >= etapa_order)]
     funil_etapas[etapa] = len(alunos_na_etapa)
 
-# Exibir resultados
-print(f"Total de alunos com qualquer melhoria: {total_alunos_com_melhoria}")
-print("Mapa de Funil de Progressão:")
-for etapa, quantidade in funil_etapas.items():
-    print(f"Alunos que atingiram {etapa}: {quantidade}")
 
 st.write(f"Total de alunos com qualquer melhoria: {total_alunos_com_melhoria}")
 
