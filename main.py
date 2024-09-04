@@ -441,12 +441,15 @@ st.write(f"Total de turmas com mais de uma sondagem: {total_turmas_mais}")
 st.title("Porcentagem da evolução dos alunos por turma")
 st.dataframe(alunos_evolucao)
 
-# Somar o total de alunos e o número de alunos com melhoria
-total_alunos = df['total_alunos'].sum()
-total_melhorias = df['alunos_com_melhoria'].sum()
+df_filtrado = alunos_evolucao[alunos_evolucao['alunos_com_melhoria'] > 0]
 
-# Calcular o percentual total
-percentual_total_melhoria = (total_melhorias / total_alunos) * 100
+total_alunos = df_filtrado['total_alunos'].sum()
+total_melhorias = df_filtrado['alunos_com_melhoria'].sum()
 
-# Exibir o resultado
-print(f"Percentual total de alunos que melhoraram: {percentual_total_melhoria:.2f}%")
+if total_alunos > 0:
+    percentual_total_melhoria = (total_melhorias / total_alunos) * 100
+else:
+    percentual_total_melhoria = 0 
+
+print(f"Percentual total de alunos que melhoraram (excluindo turmas sem melhoria): {percentual_total_melhoria:.2f}%")
+
