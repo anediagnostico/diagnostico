@@ -30,6 +30,7 @@ WITH ranked_hypotheses AS (
         sc.uf AS estado_escola,
         dh.name AS nome_hipotese,
         da.created_at,
+        da.updated_at,
         ROW_NUMBER() OVER(PARTITION BY das.student_id ORDER BY da.created_at ASC) AS rn
     FROM
         diagnostic_assessment_students das
@@ -47,6 +48,7 @@ WITH ranked_hypotheses AS (
 SELECT
     rh.student_id,
     rh.nome_aluno,
+    rh.class_id,
     rh.nome_turma,
     rh.ano_turma,
     rh.cod_inep,
@@ -55,6 +57,7 @@ SELECT
     rh.estado_escola,
     rh.nome_hipotese,
     rh.created_at,
+    rh.updated_at,
     rh.rn
 FROM
     ranked_hypotheses rh
@@ -148,20 +151,20 @@ filtered_df = filter_dataframe(df)
 st.write("Dados Filtrados:")
 st.dataframe(filtered_df)
 
-st.write("Resumo dos Dados Filtrados:")
+st.write("###Resumo dos Dados Filtrados:")
 
 # Resumo
 total_alunos = filtered_df['student_id'].nunique()
 st.write(f"Total de Alunos: {total_alunos}")
 
-total_turmas = filtered_df['nome_turma'].nunique()
+total_turmas = filtered_df['class_id'].nunique()
 st.write(f"Total de Turmas: {total_turmas}")
 
 total_escolas = filtered_df['cod_inep'].nunique()
 st.write(f"Total de Escolas: {total_escolas}")
 
 resumo_hipoteses = filtered_df.groupby(['rn', 'nome_hipotese']).size().unstack(fill_value=0)
-st.write("Resumo de Hipóteses por Ranking:")
+st.markdown("### Resumo de Hipóteses por Ranking:")
 st.dataframe(resumo_hipoteses)
 
 df = pd.read_sql(query, engine)
@@ -309,3 +312,54 @@ import streamlit as st
 
 st.write("Evolução Completa dos Alunos com Melhoria:")
 st.dataframe(alunos_com_melhoria_evolucao)
+
+from pyecharts import options as opts
+from pyecharts.charts import Pie
+from streamlit_echarts import st_pyecharts
+
+# Supondo que você já tenha os dados das hipóteses em um DataFrame
+import pandas as pd
+
+# Exemplo de dados baseados nas hipóteses dos alunos
+hipoteses_resumo = filtered_df.groupby('nome_hipotese').size().reset_index(name='count')
+
+def create_nightingale_chart(df):
+    # Ordenar o DataFrame por 'count' em ordem decrescente
+    df = df.sort_values(by='count', ascending=False)
+    
+    pie = (
+        Pie()
+        .add(
+            series_name="Nightingale Chart",
+            data_pair=[(row['nome_hipotese'].strip(), row['count']) for _, row in df.iterrows()],
+            radius=[20, 120],  # Ajusta o raio para evitar corte dos rótulos
+            center=["50%", "45%"],  # Centraliza e ajusta verticalmente o gráfico
+            rosetype="area",
+        )
+        .set_global_opts(
+            legend_opts=opts.LegendOpts(pos_bottom="0%"),  # Ajusta a posição da legenda
+            toolbox_opts=opts.ToolboxOpts(is_show=True, feature={
+                "mark": {"show": True},
+                "dataView": {"show": True, "readOnly": False},
+                "restore": {"show": True},
+                "saveAsImage": {"show": True}
+            }),
+            title_opts=opts.TitleOpts(pos_left="center")  # Centraliza o título
+        )
+        .set_series_opts(
+            label_opts=opts.LabelOpts(formatter="{b}: {c}", position="outside"),  # Garante que os rótulos fiquem fora
+            itemstyle_opts=opts.ItemStyleOpts(border_radius=4)
+        )
+    )
+    return pie
+
+# Exibir o gráfico no Streamlit
+import streamlit as st
+
+st.title("Gráfico de Rosas (Nightingale Chart) das Hipóteses dos Alunos")
+
+# Gerar o gráfico usando os dados diretamente do DataFrame
+nightingale_chart = create_nightingale_chart(hipoteses_resumo)
+
+# Mostrar o gráfico no Streamlit
+st_pyecharts(nightingale_chart)

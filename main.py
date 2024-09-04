@@ -205,6 +205,58 @@ ORDER BY
     rh.student_id, rh.rn;
 '''
 
+alunos_com_evolucao = '''WITH alunos_totais AS (
+    SELECT 
+        c.id AS turma_id,
+        c.name AS nome_turma,
+        COUNT(DISTINCT s.id) AS total_alunos
+    FROM 
+        class c
+    INNER JOIN 
+        student s ON s.class_id = c.id
+    GROUP BY 
+        c.id, c.name
+),
+alunos_melhoria AS (
+    SELECT 
+        s.id AS aluno_id,
+        c.id AS turma_id,
+        MIN(dh.ordering) AS min_ordering,
+        MAX(dh.ordering) AS max_ordering
+    FROM 
+        diagnostic_assessment_students das
+    INNER JOIN 
+        student s ON das.student_id = s.id
+    INNER JOIN 
+        class c ON s.class_id = c.id
+    INNER JOIN 
+        diagnostic_assessment_type_hypothesis dh ON das.hypothesis_id = dh.id
+    GROUP BY 
+        s.id, c.id
+),
+alunos_com_melhoria AS (
+    SELECT 
+        turma_id,
+        COUNT(aluno_id) AS alunos_com_melhoria
+    FROM 
+        alunos_melhoria
+    WHERE 
+        min_ordering < max_ordering
+    GROUP BY 
+        turma_id
+)
+SELECT 
+    t.turma_id,
+    t.nome_turma,
+    t.total_alunos,
+    COALESCE(m.alunos_com_melhoria, 0) AS alunos_com_melhoria,
+    ROUND((COALESCE(m.alunos_com_melhoria, 0) / t.total_alunos) * 100, 2) AS porcentagem_melhoria
+FROM 
+    alunos_totais t
+LEFT JOIN 
+    alunos_com_melhoria m ON t.turma_id = m.turma_id;'''
+
+
 # ------------------------- LEITURA DOS DADOS --------------------------
 logins = pd.read_sql(logins_query, engine)
 onboardings = pd.read_sql(onboardings_query, engine)
@@ -218,6 +270,7 @@ contagem_distinta_evolucao = pd.read_sql(alunos_distintos_evolucao, engine)
 contagem_professores_mais_de_uma_turma = pd.read_sql(professores_mais_de_uma_turma, engine)
 contagem_turmas_mais_de_uma_sondagem = pd.read_sql(turmas_mais_de_uma_sondagem, engine) 
 rank_hipoteses = pd.read_sql(rank_hipoteses, engine)
+alunos_evolucao = pd.read_sql(alunos_com_evolucao, engine)
 # ------------------------- FILTRAGEM DE DADOS -------------------------
 def format_integers(df: pd.DataFrame) -> pd.DataFrame:
     # Itera pelas colunas do DataFrame e converte para int se possível
@@ -384,3 +437,16 @@ st.write(f"Total de professores com mais de uma turma: {total_profs_mais}")
 st.title("Total de Trumas com mais de uma sondagem")
 total_turmas_mais = len(contagem_turmas_mais_de_uma_sondagem)
 st.write(f"Total de turmas com mais de uma sondagem: {total_turmas_mais}")
+
+st.title("Porcentagem da evolução dos alunos por turma")
+st.dataframe(alunos_evolucao)
+
+# Somar o total de alunos e o número de alunos com melhoria
+total_alunos = df['total_alunos'].sum()
+total_melhorias = df['alunos_com_melhoria'].sum()
+
+# Calcular o percentual total
+percentual_total_melhoria = (total_melhorias / total_alunos) * 100
+
+# Exibir o resultado
+print(f"Percentual total de alunos que melhoraram: {percentual_total_melhoria:.2f}%")
