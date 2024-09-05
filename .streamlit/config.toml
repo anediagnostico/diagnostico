@@ -11,3 +11,9 @@ liveFileWatcher = true
 
 # Define o intervalo em que o Streamlit verifica por alterações no código-fonte
 liveFileWatcherPollInterval = 0.01
+
+[theme]
+primaryColor = "#E32459"        
+backgroundColor = "#FFFFFF"     
+secondaryBackgroundColor = "#F8F2F6"  
+textColor = "#282828"           

@@ -384,7 +384,7 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return df
 # ------------------------- RELATÓRIO ----------------------------------
 
-st.markdown("### Login e Onboarding")
+# st.markdown("### Login e Onboarding")
 logins = filter_dataframe(logins_1)
 total_logins = logins['id_professor'].nunique()
 df_onboardings = logins[logins['onboarding_completo'] == 1]
@@ -395,10 +395,22 @@ total_onboardings = df_onboardings['id_professor'].nunique()
 
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
-    st.metric("Total de Logins Únicos", total_logins)
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <span style="font-size: 14px;">Total de Logins<br>Únicos</span><br>
+            <span style="font-size: 36px; font-weight: bold;">{total_logins}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    # st.metric("Total de Logins Únicos", total_logins)
 
 with col2:
-    st.metric("Total de Onboardings", total_onboardings)
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <span style="font-size: 14px;">Total de Onboardings<br>Únicos</span><br>
+            <span style="font-size: 36px; font-weight: bold;">{total_onboardings}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    # st.metric("Total de Onboardings", total_onboardings)
 
 
 logins['data_criacao'] = pd.to_datetime(logins['data_criacao'])
@@ -411,7 +423,7 @@ fig_1 = px.bar(df_grouped, x='data_criacao', y='total_professores',
              title='Quantidade de Professores Cadastrados por Dia (Únicos)',
              labels={'data_criacao': 'Data de Cadastro', 'total_professores': 'Total de Professores'},
              text='total_professores',
-             color_discrete_sequence=['#A6A9AD'])
+             color_discrete_sequence=['#63666A'])
 
 fig_1.update_layout(
     xaxis_tickangle=-45,
@@ -450,7 +462,7 @@ fig_2 = px.bar(df_grouped, x='data_criacao', y='total_professores',
              title='Quantidade de Professores com Onboarding Completo por Dia (Únicos)',
              labels={'data_criacao': 'Data de Cadastro', 'total_professores': 'Total de Professores'},
              text='total_professores',
-             color_discrete_sequence=['#A6A9AD'])
+             color_discrete_sequence=['#63666A'])
 
 fig_2.update_layout(
     xaxis_tickangle=-45,
