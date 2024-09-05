@@ -35,8 +35,9 @@ alunos_melhoria AS (
     SELECT 
         s.id AS aluno_id,
         c.id AS turma_id,
+        c.year AS ano_turma,
         c.cod_inep AS cod_inep_turma,
-        t.id AS professor_id,  -- Incluir o ID do professor
+        t.id AS professor_id,  
         MIN(dh.ordering) AS min_ordering,
         MAX(dh.ordering) AS max_ordering
     FROM 
@@ -46,7 +47,7 @@ alunos_melhoria AS (
     INNER JOIN 
         class c ON s.class_id = c.id
     INNER JOIN
-        teacher t ON t.id = c.teacher_id  -- Associação entre professor e turma
+        teacher t ON t.id = c.teacher_id  
     INNER JOIN 
         diagnostic_assessment_type_hypothesis dh ON das.hypothesis_id = dh.id
     GROUP BY 
@@ -55,6 +56,7 @@ alunos_melhoria AS (
 alunos_com_melhoria AS (
     SELECT 
         turma_id,
+        ano_turma,
         cod_inep_turma,
         professor_id,
         COUNT(aluno_id) AS alunos_com_melhoria
@@ -69,6 +71,7 @@ SELECT
     t.turma_id as id_turma,
     m.cod_inep_turma,
     t.nome_turma,
+    m.ano_turma,
     sc.name AS nome_escola,
     sc.municipio AS cidade_escola,
     sc.uf AS estado_escola,
@@ -162,10 +165,12 @@ turmas = filter_dataframe(df)
 
 st.markdown("## Dados de evidência de aprendizagem 📝")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4, col5 = st.columns(5)
 total_professores = turmas['id_professor'].nunique()
 total_turmas = turmas['id_turma'].nunique()
 df_filtrado = turmas[turmas['porcentagem_melhoria'] >= 50]
+soma_alunos = turmas['total_alunos'].sum()
+alunos_evid = turmas['alunos_com_melhoria'].sum()
 total_professores_50 = df_filtrado['id_professor'].nunique()
 
 # st.markdown(f"#### Quantidade de Professores com Turma cadastrada com evidência de aprendizagem: {total_professores}")
@@ -173,22 +178,41 @@ total_professores_50 = df_filtrado['id_professor'].nunique()
 with col1:
     st.markdown(f"""
         <div style="text-align: center;">
-            <span style="font-size: 14px;">Total de Profs<br>com Turmas Melhorando</span><br>
+            <span style="font-size: 14px;"> Total de Alunos <br> nas Turmas com Evid. <br> de Aprendizagem </span><br>
+            <span style="font-size: 36px; font-weight: bold;">{soma_alunos}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    # st.metric("Total de Profs com Turma Cadastrada", total_professores)
+
+with col2:
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <span style="font-size: 14px;"> Total de Alunos <br> com Evidência <br> de Aprendizagem </span><br>
+            <span style="font-size: 36px; font-weight: bold;">{alunos_evid}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    # st.metric("Total de Profs com Turma Cadastrada", total_professores)
+
+
+with col3:
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <span style="font-size: 14px;"> Total de Profs <br> com Turmas <br> Avançando </span><br>
             <span style="font-size: 36px; font-weight: bold;">{total_professores}</span>
         </div>
         """, unsafe_allow_html=True)
     # st.metric("Total de Profs com Turma Cadastrada", total_professores)
 
 
-with col2:
+with col4:
     st.markdown(f"""
         <div style="text-align: center;">
-            <span style="font-size: 14px;">Total de turmas<br>Melhorando</span><br>
+            <span style="font-size: 14px;"> Total de Turmas <br>Com Evidência <br> de Aprendizagem </span><br>
             <span style="font-size: 36px; font-weight: bold;">{total_turmas}</span>
         </div>
         """, unsafe_allow_html=True)
     
-with col3:
+with col5:
     st.markdown(f"""
         <div style="text-align: center;">
             <span style="font-size: 14px;">Profs com Turmas<br>Evid. de Aprend. maior<br> que 50 %</span><br>

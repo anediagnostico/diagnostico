@@ -42,7 +42,7 @@ st.set_page_config(
     layout="wide",  
     initial_sidebar_state="expanded",  
 )
-st.markdown("## Dashboard da Sondagem Diagnóstica 👩🏾‍🏫")
+st.markdown("## Dados Gerais da Sondagem Diagnóstica 👩🏾‍🏫")
 st.sidebar.markdown("# Dados de Diagnóstico")
 st.sidebar.markdown('## Filtros: ')
 # modify = st.sidebar.checkbox("Adicionar Filtros")
@@ -458,7 +458,7 @@ df_grouped_2 = df_onboardings.groupby(df_onboardings['data_criacao'].dt.date)['i
 # st.plotly_chart(fig_2)
 
 
-fig_2 = px.bar(df_grouped, x='data_criacao', y='total_professores', 
+fig_2 = px.bar(df_grouped_2, x='data_criacao', y='total_professores', 
              title='Quantidade de Professores com Onboarding Completo por Dia (Únicos)',
              labels={'data_criacao': 'Data de Cadastro', 'total_professores': 'Total de Professores'},
              text='total_professores',

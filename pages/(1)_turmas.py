@@ -28,13 +28,18 @@ query = '''SELECT
     c.created_at AS data_cadastro_turma,
     s.id AS id_aluno,
     s.name AS nome_aluno,
+    sc.name AS nome_escola,
+    sc.municipio AS cidade_escola,
+    sc.uf AS estado_escola,
     s.created_at AS data_cadastro_aluno
 FROM
     teacher t
 INNER JOIN
-    class c ON t.id = c.teacher_id  -- Associação entre professor e turma
+    class c ON t.id = c.teacher_id  
 INNER JOIN
-    student s ON s.class_id = c.id  -- Associação entre aluno e turma
+    student s ON s.class_id = c.id  
+INNER JOIN 
+    school sc ON c.cod_inep = sc.cod_inep
 ORDER BY
     t.id, c.id, s.id;
 '''
@@ -111,15 +116,15 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 df = pd.read_sql(query, engine)
 
-st.markdown("## Turmas: professores e alunos 🎓")
+st.markdown("## Dados de Turmas cadastradas 🎓")
 turmas = filter_dataframe(df)
 total_professores = turmas['id_professor'].nunique()
 total_turmas = turmas['id_turma'].nunique()
 total_alunos = turmas['id_aluno'].nunique()
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4, col5 = st.columns(5)
 
-with col1:
+with col3:
     st.markdown(f"""
         <div style="text-align: center;">
             <span style="font-size: 14px;">Total de Profs<br>com Turma Cadastrada</span><br>
@@ -137,7 +142,7 @@ with col2:
         """, unsafe_allow_html=True)
     # st.metric("Total Geral de Turmas", total_turmas)
 
-with col3:
+with col1:
     st.markdown(f"""
         <div style="text-align: center;">
             <span style="font-size: 14px;">Total Geral de Alunos<br>Cadastrados</span><br>

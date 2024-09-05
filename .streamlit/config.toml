@@ -13,7 +13,8 @@ liveFileWatcher = true
 liveFileWatcherPollInterval = 0.01
 
 [theme]
-primaryColor = "#E32459"        
+base="dark"
+primaryColor="pink"     
 backgroundColor = "#FFFFFF"     
 secondaryBackgroundColor = "#F8F2F6"  
 textColor = "#282828"           
