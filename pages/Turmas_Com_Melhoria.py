@@ -35,6 +35,7 @@ alunos_melhoria AS (
     SELECT 
         s.id AS aluno_id,
         c.id AS turma_id,
+        c.cod_inep AS cod_inep_turma,
         t.id AS professor_id,  -- Incluir o ID do professor
         MIN(dh.ordering) AS min_ordering,
         MAX(dh.ordering) AS max_ordering
@@ -54,6 +55,7 @@ alunos_melhoria AS (
 alunos_com_melhoria AS (
     SELECT 
         turma_id,
+        cod_inep_turma,
         professor_id,
         COUNT(aluno_id) AS alunos_com_melhoria
     FROM 
@@ -65,7 +67,11 @@ alunos_com_melhoria AS (
 )
 SELECT 
     t.turma_id as id_turma,
+    m.cod_inep_turma,
     t.nome_turma,
+    sc.name AS nome_escola,
+    sc.municipio AS cidade_escola,
+    sc.uf AS estado_escola,
     t.professor_id as id_professor,  
     t.total_alunos,
     COALESCE(m.alunos_com_melhoria, 0) AS alunos_com_melhoria,
@@ -74,6 +80,9 @@ FROM
     alunos_totais t
 LEFT JOIN 
     alunos_com_melhoria m ON t.turma_id = m.turma_id
+INNER JOIN
+    school sc ON m.cod_inep_turma = sc.cod_inep
+
 WHERE 
     COALESCE(m.alunos_com_melhoria, 0) > 0;'''
 
@@ -151,20 +160,46 @@ df = pd.read_sql(query, engine)
 
 turmas = filter_dataframe(df)
 
-total_professores = turmas['id_professor'].nunique()
-st.markdown(f"#### Quantidade de Professores com Turma cadastrada com evidência de aprendizagem: {total_professores}")
+st.markdown("## Dados de evidência de aprendizagem 📝")
 
+col1, col2, col3 = st.columns(3)
+total_professores = turmas['id_professor'].nunique()
 total_turmas = turmas['id_turma'].nunique()
-st.markdown(f"#### Quantidade de Turmas Únicas com evidência de aprendizagem: {total_turmas}")
+df_filtrado = turmas[turmas['porcentagem_melhoria'] >= 50]
+total_professores_50 = df_filtrado['id_professor'].nunique()
+
+# st.markdown(f"#### Quantidade de Professores com Turma cadastrada com evidência de aprendizagem: {total_professores}")
+
+with col1:
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <span style="font-size: 14px;">Total de Profs<br>com Turmas Melhorando</span><br>
+            <span style="font-size: 36px; font-weight: bold;">{total_professores}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    # st.metric("Total de Profs com Turma Cadastrada", total_professores)
+
+
+with col2:
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <span style="font-size: 14px;">Total de turmas<br>Melhorando</span><br>
+            <span style="font-size: 36px; font-weight: bold;">{total_turmas}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
+with col3:
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <span style="font-size: 14px;">Profs com Turmas<br>Evid. de Aprend. maior<br> que 50 %</span><br>
+            <span style="font-size: 36px; font-weight: bold;">{total_professores_50}</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+# st.markdown(f"#### Quantidade de Turmas Únicas com evidência de aprendizagem: {total_turmas}")
 
 with st.expander("Clique aqui para os dados das turmas com evidência de aprendizagem"):
     st.dataframe(turmas)
-
-df_filtrado = turmas[turmas['porcentagem_melhoria'] >= 50]
-
-total_professores = df_filtrado['id_professor'].nunique()
-
-st.markdown(f"#### Quantidade de Professores com Turma cadastrada com evidência de aprendizagem e com pelo menos 50% de alunos que melhoraram: {total_professores}")
 
 #print(f"Percentual total de alunos que melhoraram (excluindo turmas sem melhoria): {percentual_total_melhoria:.2f}%")
 

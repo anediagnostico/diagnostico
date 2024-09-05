@@ -111,16 +111,49 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 df = pd.read_sql(query, engine)
 
-st.markdown("### Turmas: professores e alunos")
+st.markdown("## Turmas: professores e alunos 🎓")
 turmas = filter_dataframe(df)
 total_professores = turmas['id_professor'].nunique()
-st.markdown(f"#### Quantidade de Professores Únicos com Turma cadastrada: {total_professores}")
-
 total_turmas = turmas['id_turma'].nunique()
-st.markdown(f"#### Quantidade de Turmas Únicas cadastradas: {total_turmas}")
-
 total_alunos = turmas['id_aluno'].nunique()
-st.markdown(f"#### Quantidade de alunos Únicos cadastrados: {total_alunos}")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <span style="font-size: 14px;">Total de Profs<br>com Turma Cadastrada</span><br>
+            <span style="font-size: 36px; font-weight: bold;">{total_professores}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    # st.metric("Total de Profs com Turma Cadastrada", total_professores)
+
+with col2:
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <span style="font-size: 14px;">Total Geral de Turmas<br>Cadastradas</span><br>
+            <span style="font-size: 36px; font-weight: bold;">{total_turmas}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    # st.metric("Total Geral de Turmas", total_turmas)
+
+with col3:
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <span style="font-size: 14px;">Total Geral de Alunos<br>Cadastrados</span><br>
+            <span style="font-size: 36px; font-weight: bold;">{total_alunos}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    # st.metric("Total de Alunos Cadastrados", total_alunos)
+
+
+# st.markdown(f"#### Quantidade de Professores Únicos com Turma cadastrada: {total_professores}")
+
+
+# st.markdown(f"#### Quantidade de Turmas Únicas cadastradas: {total_turmas}")
+
+
+# st.markdown(f"#### Quantidade de alunos Únicos cadastrados: {total_alunos}")
 
 turmas['data_cadastro_professor'] = pd.to_datetime(turmas['data_cadastro_professor'])
 turmas['data_cadastro_turma'] = pd.to_datetime(turmas['data_cadastro_turma'])
@@ -132,5 +165,5 @@ with st.expander("Clique aqui para os dados das turmas cadastradas"):
     st.dataframe(df)
 
 
-with st.expander("Clique aqui para os dados das turmas cadastradas"):
+with st.expander("Clique aqui para os dados de contagem de turmas únicas por dia"):
     st.dataframe(df_grouped)
