@@ -42,7 +42,7 @@ st.set_page_config(
     layout="wide",  
     initial_sidebar_state="expanded",  
 )
-st.markdown("## Dashboard da Sondagem Diagnóstica")
+st.markdown("## Dashboard da Sondagem Diagnóstica 👩🏾‍🏫")
 st.sidebar.markdown("# Dados de Diagnóstico")
 st.sidebar.markdown('## Filtros: ')
 # modify = st.sidebar.checkbox("Adicionar Filtros")
@@ -387,19 +387,46 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 st.markdown("### Login e Onboarding")
 logins = filter_dataframe(logins_1)
 total_logins = logins['id_professor'].nunique()
-st.markdown(f"#### Quantidade de Professores Únicos que fizeram login na Ferramenta: {total_logins}")
+df_onboardings = logins[logins['onboarding_completo'] == 1]
+total_onboardings = df_onboardings['id_professor'].nunique()
+
+# st.markdown(f"#### Quantidade de Professores Únicos com Onboarding completo na Ferramenta: {total_onboardings}")
+# st.markdown(f"#### Quantidade de Professores Únicos que fizeram login na Ferramenta: {total_logins}")
+
+col1, col2, col3, col4, col5 = st.columns(5)
+with col1:
+    st.metric("Total de Logins Únicos", total_logins)
+
+with col2:
+    st.metric("Total de Onboardings", total_onboardings)
+
 
 logins['data_criacao'] = pd.to_datetime(logins['data_criacao'])
 
 df_grouped = logins.groupby(logins['data_criacao'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
 
-fig_1 = go.Figure()
+# st.title("Relatório de Professores - Uso e Cadastramento")
 
 fig_1 = px.bar(df_grouped, x='data_criacao', y='total_professores', 
              title='Quantidade de Professores Cadastrados por Dia (Únicos)',
              labels={'data_criacao': 'Data de Cadastro', 'total_professores': 'Total de Professores'},
-             text='total_professores')
+             text='total_professores',
+             color_discrete_sequence=['#A6A9AD'])
 
+fig_1.update_layout(
+    xaxis_tickangle=-45,
+    height=600,  
+    xaxis=dict(
+        tickmode='auto',  
+        nticks=20 
+    ),
+    yaxis=dict(
+        title="Total de Professores",  
+        gridcolor="LightGrey"  
+    )
+)
+
+fig_1.update_traces(texttemplate='%{text:.2s}', textposition='outside')
 
 st.plotly_chart(fig_1)
 
@@ -409,27 +436,41 @@ with st.expander("Clique aqui para os dados de professores únicos"):
 with st.expander("Clique aqui para os dados de contagem de professores únicos por dia"):
     st.dataframe(df_grouped)
 
-df_onboardings = logins[logins['onboarding_completo'] == 1]
-
-total_onboardings = df_onboardings['id_professor'].nunique()
-
-st.markdown(f"#### Quantidade de Professores Únicos com Onboarding completo na Ferramenta: {total_onboardings}")
-
 df_grouped_2 = df_onboardings.groupby(df_onboardings['data_criacao'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
 
-fig_2 = go.Figure()
+# fig_2 = px.bar(df_grouped_2, x='data_criacao', y='total_professores', 
+#              title='Quantidade de Professores com Onboarding Completo por Dia (Únicos)',
+#              labels={'data_criacao': 'Data de Cadastro', 'total_professores': 'Total de Professores'},
+#              text='total_professores')
 
-fig_2 = px.bar(df_grouped_2, x='data_criacao', y='total_professores', 
+# st.plotly_chart(fig_2)
+
+
+fig_2 = px.bar(df_grouped, x='data_criacao', y='total_professores', 
              title='Quantidade de Professores com Onboarding Completo por Dia (Únicos)',
              labels={'data_criacao': 'Data de Cadastro', 'total_professores': 'Total de Professores'},
-             text='total_professores')
+             text='total_professores',
+             color_discrete_sequence=['#A6A9AD'])
+
+fig_2.update_layout(
+    xaxis_tickangle=-45,
+    height=600,  
+    xaxis=dict(
+        tickmode='auto',  
+        nticks=20 
+    ),
+    yaxis=dict(
+        title="Total de Professores",  
+        gridcolor="LightGrey"  
+    )
+)
+
+fig_2.update_traces(texttemplate='%{text:.2s}', textposition='outside')
 
 st.plotly_chart(fig_2)
 
 with st.expander("Clique aqui para acessar os dados de professores com onboarding completo."):
     st.dataframe(df_onboardings)
-
-
 # st.write("Quantidade de Sondagens totais realizadas:", diagnosis['total_diagnosis'].iloc[0])
 # st.write("Quantidade de Alunos Únicos Inscritos na Ferramenta:", students['total_students'].iloc[0])
 # st.write("Quantidade de Turmas Únicas cadastradas na Ferramenta:", classes['total_classes'].iloc[0])
