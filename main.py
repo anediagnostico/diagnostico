@@ -12,6 +12,8 @@ from pandas.api.types import (
     is_numeric_dtype,
     is_object_dtype,
 )
+import plotly.express as px
+import plotly.graph_objects as go
 
 load_dotenv()
 # ------------------------- CONEXÃO COM O BANCO DE DADOS -----------------
@@ -35,23 +37,33 @@ engine = create_engine(connection_string)
 # ------------------------- INTERFACE GRÁFICA --------------------------
 
 st.set_page_config(
-    page_title="Relatório de Sondagens",  
+    page_title="Relatório de Sondagens Diagnósticas",  
     page_icon="📊", 
     layout="wide",  
     initial_sidebar_state="expanded",  
 )
-st.markdown("## Dashboard da Sondagem Diagnóstica 🎈")
-st.sidebar.markdown("# Página Principal do Relatório 🎈")
-st.sidebar.markdown('## Seus filtros estão aqui! ✅')
+st.markdown("## Dashboard da Sondagem Diagnóstica")
+st.sidebar.markdown("# Dados de Diagnóstico")
+st.sidebar.markdown('## Filtros: ')
 # modify = st.sidebar.checkbox("Adicionar Filtros")
 
 
 # ------------------------- SQL QUERIES --------------------------------
-logins_query = "SELECT COUNT(distinct t.auth_id) AS total_logins FROM teacher t"
+logins_query = '''SELECT distinct
+    t.id as id_professor,
+    t.auth_id as id_nova_escola,
+    t.confirmed as confirmado,
+    t.active as ativo,
+    t.created_at as data_criacao,
+    t.updated_at as data_atualizacao,
+    t.onboarding_completed as onboarding_completo
+FROM teacher t'''
+
+
 onboardings_query = "SELECT COUNT(t.auth_id) AS total_onboardings FROM teacher t WHERE t.onboarding_completed = 1;"
 students_query = "SELECT COUNT(distinct s.id) AS total_students FROM student s WHERE s.active = 1;"
 diagnostics_query = "SELECT COUNT(distinct da.id) AS total_diagnosis FROM diagnostic_assessment da;"	
-classes_query = "SELECT COUNT(*) AS total_classes FROM class;"
+classes_query = "SELECT COUNT(distinct cl.id) AS total_classes FROM class cl;"
 students_by_class_query = """SELECT
     t.id AS id_professor,
     c.id AS id_turma,
@@ -209,18 +221,22 @@ alunos_com_evolucao = '''WITH alunos_totais AS (
     SELECT 
         c.id AS turma_id,
         c.name AS nome_turma,
+        t.id AS professor_id,  -- Incluir o ID do professor
         COUNT(DISTINCT s.id) AS total_alunos
     FROM 
         class c
     INNER JOIN 
         student s ON s.class_id = c.id
+    INNER JOIN
+        teacher t ON t.id = c.teacher_id  -- Associação entre professor e turma
     GROUP BY 
-        c.id, c.name
+        c.id, c.name, t.id
 ),
 alunos_melhoria AS (
     SELECT 
         s.id AS aluno_id,
         c.id AS turma_id,
+        t.id AS professor_id,  -- Incluir o ID do professor
         MIN(dh.ordering) AS min_ordering,
         MAX(dh.ordering) AS max_ordering
     FROM 
@@ -229,36 +245,42 @@ alunos_melhoria AS (
         student s ON das.student_id = s.id
     INNER JOIN 
         class c ON s.class_id = c.id
+    INNER JOIN
+        teacher t ON t.id = c.teacher_id  -- Associação entre professor e turma
     INNER JOIN 
         diagnostic_assessment_type_hypothesis dh ON das.hypothesis_id = dh.id
     GROUP BY 
-        s.id, c.id
+        s.id, c.id, t.id
 ),
 alunos_com_melhoria AS (
     SELECT 
         turma_id,
+        professor_id,
         COUNT(aluno_id) AS alunos_com_melhoria
     FROM 
         alunos_melhoria
     WHERE 
-        min_ordering < max_ordering
+        min_ordering < max_ordering  -- Filtra alunos que melhoraram de nível
     GROUP BY 
-        turma_id
+        turma_id, professor_id
 )
 SELECT 
     t.turma_id,
     t.nome_turma,
+    t.professor_id,  -- Incluir o ID do professor
     t.total_alunos,
     COALESCE(m.alunos_com_melhoria, 0) AS alunos_com_melhoria,
     ROUND((COALESCE(m.alunos_com_melhoria, 0) / t.total_alunos) * 100, 2) AS porcentagem_melhoria
 FROM 
     alunos_totais t
 LEFT JOIN 
-    alunos_com_melhoria m ON t.turma_id = m.turma_id;'''
+    alunos_com_melhoria m ON t.turma_id = m.turma_id
+WHERE 
+    COALESCE(m.alunos_com_melhoria, 0) > 0;'''
 
 
 # ------------------------- LEITURA DOS DADOS --------------------------
-logins = pd.read_sql(logins_query, engine)
+logins_1 = pd.read_sql(logins_query, engine)
 onboardings = pd.read_sql(onboardings_query, engine)
 students = pd.read_sql(students_query, engine)
 diagnosis = pd.read_sql(diagnostics_query, engine)
@@ -362,94 +384,136 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return df
 # ------------------------- RELATÓRIO ----------------------------------
 
-st.subheader("Métricas Gerais")
-st.markdown("#### As métricas abaixo apresentam os totais gerais (sem considerar filtragem de dados):")
-st.write("Quantidade de Logins:", logins['total_logins'].iloc[0])
-st.write("Quantidade de Onboardings:", onboardings['total_onboardings'].iloc[0])
-st.write("Quantidade de Sondagens:", diagnosis['total_diagnosis'].iloc[0])
-st.write("Quantidade de Alunos Inscritos:", students['total_students'].iloc[0])
-st.write("Quantidade de Turmas:", classes['total_classes'].iloc[0])
-st.write("Quantidade de Turmas com Mais de 1 Sondagem:", contagem_turmas_mais_de_uma_sondagem['total_classes_with_multiple_assessments'].sum())
+st.markdown("### Login e Onboarding")
+logins = filter_dataframe(logins_1)
+total_logins = logins['id_professor'].nunique()
+st.markdown(f"#### Quantidade de Professores Únicos que fizeram login na Ferramenta: {total_logins}")
 
-st.subheader("Alunos por Turma e Professor")
-filtered = filter_dataframe(students_by_class)
+logins['data_criacao'] = pd.to_datetime(logins['data_criacao'])
 
+df_grouped = logins.groupby(logins['data_criacao'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
 
-df = format_integers(filtered)
-df['id_professor'] = df['id_professor'].astype(int)
-df['id_turma'] = df['id_turma'].astype(int)
-df['ano_turma'] = df['ano_turma'].astype(int)
-df['id_aluno'] = df['id_aluno'].astype(int)
-df['cod_inep'] = df['cod_inep'].astype(int)
-df['id_avaliacao'] = df['id_avaliacao'].astype(int)
+fig_1 = go.Figure()
 
-df['id_professor'] = df['id_professor'].apply(lambda x: f'{x:,}'.replace(',', ''))
-df['id_turma'] = df['id_turma'].apply(lambda x: f'{x:,}'.replace(',', ''))
-df['ano_turma'] = df['ano_turma'].apply(lambda x: f'{x:,}'.replace(',', ''))
-df['id_aluno'] = df['id_aluno'].apply(lambda x: f'{x:,}'.replace(',', ''))
-df['cod_inep'] = df['cod_inep'].apply(lambda x: f'{x:,}'.replace(',', ''))
-df['id_avaliacao'] = df['id_avaliacao'].apply(lambda x: f'{x:,}'.replace(',', ''))
-
-with st.expander("Clique aqui para visualizar os microdados"):
-    st.dataframe(df)
+fig_1 = px.bar(df_grouped, x='data_criacao', y='total_professores', 
+             title='Quantidade de Professores Cadastrados por Dia (Únicos)',
+             labels={'data_criacao': 'Data de Cadastro', 'total_professores': 'Total de Professores'},
+             text='total_professores')
 
 
-st.write("Resumo dos Dados Filtrados:")
+st.plotly_chart(fig_1)
+
+with st.expander("Clique aqui para os dados de professores únicos"):
+    st.dataframe(logins)
+
+with st.expander("Clique aqui para os dados de contagem de professores únicos por dia"):
+    st.dataframe(df_grouped)
+
+df_onboardings = logins[logins['onboarding_completo'] == 1]
+
+total_onboardings = df_onboardings['id_professor'].nunique()
+
+st.markdown(f"#### Quantidade de Professores Únicos com Onboarding completo na Ferramenta: {total_onboardings}")
+
+df_grouped_2 = df_onboardings.groupby(df_onboardings['data_criacao'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
+
+fig_2 = go.Figure()
+
+fig_2 = px.bar(df_grouped_2, x='data_criacao', y='total_professores', 
+             title='Quantidade de Professores com Onboarding Completo por Dia (Únicos)',
+             labels={'data_criacao': 'Data de Cadastro', 'total_professores': 'Total de Professores'},
+             text='total_professores')
+
+st.plotly_chart(fig_2)
+
+with st.expander("Clique aqui para acessar os dados de professores com onboarding completo."):
+    st.dataframe(df_onboardings)
 
 
-total_alunos = df['id_aluno'].nunique()
-st.write(f"Total de Alunos: {total_alunos}")
+# st.write("Quantidade de Sondagens totais realizadas:", diagnosis['total_diagnosis'].iloc[0])
+# st.write("Quantidade de Alunos Únicos Inscritos na Ferramenta:", students['total_students'].iloc[0])
+# st.write("Quantidade de Turmas Únicas cadastradas na Ferramenta:", classes['total_classes'].iloc[0])
+# st.write("Quantidade de Turmas com Mais de 1 Sondagem realizada:", contagem_turmas_mais_de_uma_sondagem['total_classes_with_multiple_assessments'].sum())
+
+# st.subheader("Alunos por Turma e Professor")
+# filtered = filter_dataframe(students_by_class)
 
 
-total_turmas = df['id_turma'].nunique()
-st.write(f"Total de Turmas: {total_turmas}")
+# df = format_integers(filtered)
+# df['id_professor'] = df['id_professor'].astype(int)
+# df['id_turma'] = df['id_turma'].astype(int)
+# df['ano_turma'] = df['ano_turma'].astype(int)
+# df['id_aluno'] = df['id_aluno'].astype(int)
+# df['cod_inep'] = df['cod_inep'].astype(int)
+# df['id_avaliacao'] = df['id_avaliacao'].astype(int)
+
+# df['id_professor'] = df['id_professor'].apply(lambda x: f'{x:,}'.replace(',', ''))
+# df['id_turma'] = df['id_turma'].apply(lambda x: f'{x:,}'.replace(',', ''))
+# df['ano_turma'] = df['ano_turma'].apply(lambda x: f'{x:,}'.replace(',', ''))
+# df['id_aluno'] = df['id_aluno'].apply(lambda x: f'{x:,}'.replace(',', ''))
+# df['cod_inep'] = df['cod_inep'].apply(lambda x: f'{x:,}'.replace(',', ''))
+# df['id_avaliacao'] = df['id_avaliacao'].apply(lambda x: f'{x:,}'.replace(',', ''))
+
+# with st.expander("Clique aqui para visualizar os microdados"):
+#     st.dataframe(df)
 
 
-total_escolas = df['cod_inep'].nunique()
-st.write(f"Total de Escolas: {total_escolas}")
+# st.write("Resumo dos Dados Filtrados:")
 
 
-resumo_hipoteses = df.groupby('id_aluno')['nome_hipotese'].first().value_counts()
-st.write("Resumo de Hipóteses (Alunos Únicos):")
-st.dataframe(resumo_hipoteses)
+# total_alunos = df['id_aluno'].nunique()
+# st.write(f"Total de Alunos: {total_alunos}")
 
-st.title("Dados por Hipótese Atribuída aos Alunos")
-st.dataframe(rank_hipoteses)
 
-st.title("Evolução dos Alunos com Datas")
-st.write("Aqui estão os alunos que mostraram evolução ao longo do tempo:")
-evolucao['id_aluno'] = evolucao['id_aluno'].astype(int) 
-evolucao['id_aluno'] = evolucao['id_aluno'].apply(lambda x: f'{x:,}'.replace(',', ''))
+# total_turmas = df['id_turma'].nunique()
+# st.write(f"Total de Turmas: {total_turmas}")
 
-st.dataframe(evolucao)
 
-st.title("Evolução dos Alunos")
-st.dataframe(contagem_evolucao)
+# total_escolas = df['cod_inep'].nunique()
+# st.write(f"Total de Escolas: {total_escolas}")
 
-st.title("Evolução dos Alunos")
-total_students_with_evolution = len(contagem_distinta_evolucao)
-st.write(f"Total de alunos distintos com evolução: {total_students_with_evolution}")
 
-st.title("Professores com mais de uma turma")
-total_profs_mais = len(contagem_professores_mais_de_uma_turma)
-st.write(f"Total de professores com mais de uma turma: {total_profs_mais}")
+# resumo_hipoteses = df.groupby('id_aluno')['nome_hipotese'].first().value_counts()
+# st.write("Resumo de Hipóteses (Alunos Únicos):")
+# st.dataframe(resumo_hipoteses)
 
-st.title("Total de Trumas com mais de uma sondagem")
-total_turmas_mais = len(contagem_turmas_mais_de_uma_sondagem)
-st.write(f"Total de turmas com mais de uma sondagem: {total_turmas_mais}")
+# st.title("Dados por Hipótese Atribuída aos Alunos")
+# st.dataframe(rank_hipoteses)
 
-st.title("Porcentagem da evolução dos alunos por turma")
-st.dataframe(alunos_evolucao)
+# st.title("Evolução dos Alunos com Datas")
+# st.write("Aqui estão os alunos que mostraram evolução ao longo do tempo:")
+# evolucao['id_aluno'] = evolucao['id_aluno'].astype(int) 
+# evolucao['id_aluno'] = evolucao['id_aluno'].apply(lambda x: f'{x:,}'.replace(',', ''))
 
-df_filtrado = alunos_evolucao[alunos_evolucao['alunos_com_melhoria'] > 0]
+# st.dataframe(evolucao)
 
-total_alunos = df_filtrado['total_alunos'].sum()
-total_melhorias = df_filtrado['alunos_com_melhoria'].sum()
+# st.title("Evolução dos Alunos")
+# st.dataframe(contagem_evolucao)
 
-if total_alunos > 0:
-    percentual_total_melhoria = (total_melhorias / total_alunos) * 100
-else:
-    percentual_total_melhoria = 0 
+# st.title("Evolução dos Alunos")
+# total_students_with_evolution = len(contagem_distinta_evolucao)
+# st.write(f"Total de alunos distintos com evolução: {total_students_with_evolution}")
 
-print(f"Percentual total de alunos que melhoraram (excluindo turmas sem melhoria): {percentual_total_melhoria:.2f}%")
+# st.title("Professores com mais de uma turma")
+# total_profs_mais = len(contagem_professores_mais_de_uma_turma)
+# st.write(f"Total de professores com mais de uma turma: {total_profs_mais}")
+
+# st.title("Total de Trumas com mais de uma sondagem")
+# total_turmas_mais = len(contagem_turmas_mais_de_uma_sondagem)
+# st.write(f"Total de turmas com mais de uma sondagem: {total_turmas_mais}")
+
+# st.title("Porcentagem da evolução dos alunos por turma")
+# st.dataframe(alunos_evolucao)
+
+# df_filtrado = alunos_evolucao[alunos_evolucao['alunos_com_melhoria'] > 0]
+
+# total_alunos = df_filtrado['total_alunos'].sum()
+# total_melhorias = df_filtrado['alunos_com_melhoria'].sum()
+
+# if total_alunos > 0:
+#     percentual_total_melhoria = (total_melhorias / total_alunos) * 100
+# else:
+#     percentual_total_melhoria = 0 
+
+# #print(f"Percentual total de alunos que melhoraram (excluindo turmas sem melhoria): {percentual_total_melhoria:.2f}%")
 

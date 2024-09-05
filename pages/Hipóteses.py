@@ -15,7 +15,8 @@ database = os.getenv('DB_NAME')
 
 connection_string = f'mysql+pymysql://{user}:{password}@{host}/{database}'
 engine = create_engine(connection_string)
-# Carregar os dados da consulta SQL
+
+
 query = """
 WITH ranked_hypotheses AS (
     SELECT
@@ -66,13 +67,13 @@ ORDER BY
 """
 df = pd.read_sql(query, engine)
 
-# Tratar colunas que são inteiros
+# tratar colunas que são inteiros
 integer_columns = ['student_id', 'class_id', 'ano_turma', 'cod_inep', 'rn']
 for col in integer_columns:
     if col in df.columns:
         df[col] = df[col].astype(int)
 
-# Função para filtrar o DataFrame
+# função para filtrar o DataFrame
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     modify = st.sidebar.checkbox("Adicionar Filtros", key="filter_checkbox")
 

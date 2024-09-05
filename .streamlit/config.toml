@@ -10,4 +10,4 @@ magicEnabled = true
 liveFileWatcher = true
 
 # Define o intervalo em que o Streamlit verifica por alterações no código-fonte
-liveFileWatcherPollInterval = 0.1
+liveFileWatcherPollInterval = 0.01
