@@ -22,7 +22,9 @@ WITH ranked_hypotheses AS (
     SELECT
         das.student_id,
         s.name AS nome_aluno,
-        s.class_id,
+        s.class_id AS id_turma,
+        t.id AS id_professor,
+        t.auth_id AS id_nova_escola,
         c.name AS nome_turma,
         c.year AS ano_turma,
         sc.cod_inep AS cod_inep,
@@ -33,7 +35,7 @@ WITH ranked_hypotheses AS (
         da.month AS mes_de_aplicacao,
         da.created_at,
         da.updated_at,
-        ROW_NUMBER() OVER(PARTITION BY das.student_id ORDER BY da.created_at ASC) AS rn
+        ROW_NUMBER() OVER(PARTITION BY das.student_id ORDER BY da.created_at ASC) AS num_sondagem
     FROM
         diagnostic_assessment_students das
     INNER JOIN
@@ -45,12 +47,17 @@ WITH ranked_hypotheses AS (
     INNER JOIN
         class c ON s.class_id = c.id
     INNER JOIN
+        teacher t ON t.id = c.teacher_id  
+    INNER JOIN
         school sc ON c.cod_inep = sc.cod_inep
+    WHERE t.auth_id NOT IN ('3','6','18','64','1466346', '1581795','175689','1980922','2051263','2241909','2347872','2607842','2988478','3457137','3693288','3693431','3912304','4681737','4813648','5106338','5326020','5331581','5722986','5726715','5740041','5844577','6132779', '6183405', '6361801','6447188','6470829','6491287')
 )
 SELECT
-    rh.student_id,
+    rh.student_id as id_aluno,
     rh.nome_aluno,
-    rh.class_id,
+    rh.id_turma,
+    rh.id_professor,
+    rh.id_nova_escola,
     rh.nome_turma,
     rh.ano_turma,
     rh.cod_inep,
@@ -61,16 +68,16 @@ SELECT
     rh.mes_de_aplicacao,
     rh.created_at,
     rh.updated_at,
-    rh.rn
+    rh.num_sondagem
 FROM
     ranked_hypotheses rh
 ORDER BY
-    rh.student_id, rh.rn;
+    rh.student_id, rh.num_sondagem;
 """
 df = pd.read_sql(query, engine)
 
 # tratar colunas que são inteiros
-integer_columns = ['student_id', 'class_id', 'ano_turma', 'cod_inep', 'rn']
+integer_columns = ['id_aluno', 'id_turma', 'ano_turma', 'cod_inep', 'num_sondagem']
 for col in integer_columns:
     if col in df.columns:
         df[col] = df[col].astype(int)
@@ -157,23 +164,23 @@ st.dataframe(filtered_df)
 st.write("###Resumo dos Dados Filtrados:")
 
 # Resumo
-total_alunos = filtered_df['student_id'].nunique()
+total_alunos = filtered_df['id_aluno'].nunique()
 st.write(f"Total de Alunos: {total_alunos}")
 
-total_turmas = filtered_df['class_id'].nunique()
+total_turmas = filtered_df['id_turma'].nunique()
 st.write(f"Total de Turmas: {total_turmas}")
 
 total_escolas = filtered_df['cod_inep'].nunique()
 st.write(f"Total de Escolas: {total_escolas}")
 
-resumo_hipoteses = filtered_df.groupby(['rn', 'nome_hipotese']).size().unstack(fill_value=0)
+resumo_hipoteses = filtered_df.groupby(['num_sondagem', 'nome_hipotese']).size().unstack(fill_value=0)
 st.markdown("### Resumo de Hipóteses por Ranking:")
 st.dataframe(resumo_hipoteses)
 
 df = pd.read_sql(query, engine)
 
 # Tratar colunas que são inteiros
-integer_columns = ['student_id', 'class_id', 'ano_turma', 'cod_inep', 'rn']
+integer_columns = ['id_aluno', 'id_turma', 'ano_turma', 'cod_inep', 'num_sondagem']
 for col in integer_columns:
     if col in df.columns:
         df[col] = df[col].astype(int)
@@ -224,7 +231,7 @@ def criar_gauge(df_filtered, ranking_desejado):
 
     st.plotly_chart(fig)
 
-# Filtrar o DataFrame para o ranking desejado (rn=1)
+# Filtrar o DataFrame para o ranking desejado (num_sondagem=1)
 ranking_desejado = 1
 
 # Sidebar para filtros adicionais
@@ -233,7 +240,7 @@ selected_turma = st.sidebar.multiselect("Filtrar por Turma:", df['nome_turma'].u
 selected_escola = st.sidebar.multiselect("Filtrar por Escola:", df['nome_escola'].unique())
 
 # Aplicar filtros
-df_filtered = df[df['rn'] == ranking_desejado]
+df_filtered = df[df['num_sondagem'] == ranking_desejado]
 
 if selected_turma:
     df_filtered = df_filtered[df_filtered['nome_turma'].isin(selected_turma)]
@@ -245,7 +252,7 @@ if selected_escola:
 # st.title("Visualização do Resumo de Hipóteses por Ranking")
 # criar_gauge(df_filtered, ranking_desejado)
 
-# Supondo que você já tenha carregado o DataFrame df com as colunas 'student_id', 'nome_hipotese', e 'rn'
+# Supondo que você já tenha carregado o DataFrame df com as colunas 'student_id', 'nome_hipotese', e 'num_sondagem'
 
 # Criar um mapeamento para a ordem das hipóteses
 ordem_hipoteses = {
@@ -261,7 +268,7 @@ ordem_hipoteses = {
 df['ordering'] = df['nome_hipotese'].map(ordem_hipoteses)
 
 # Agrupar por aluno e calcular a primeira e a última hipótese
-progresso_alunos = df.groupby('student_id')['ordering'].agg(['min', 'max'])
+progresso_alunos = df.groupby('id_aluno')['ordering'].agg(['min', 'max'])
 
 # Identificar alunos que tiveram qualquer melhoria
 alunos_com_melhoria = progresso_alunos[progresso_alunos['min'] < progresso_alunos['max']]
@@ -291,21 +298,21 @@ st.dataframe(alunos_com_melhoria)
 df['ordering'] = df['nome_hipotese'].map(ordem_hipoteses)
 
 # Agrupar por aluno e calcular a primeira e a última hipótese
-progresso_alunos = df.groupby('student_id')['ordering'].agg(['min', 'max'])
+progresso_alunos = df.groupby('id_aluno')['ordering'].agg(['min', 'max'])
 
 # Identificar alunos que tiveram qualquer melhoria
 alunos_com_melhoria_ids = progresso_alunos[progresso_alunos['min'] < progresso_alunos['max']].index
 
 # Filtrar o DataFrame original para esses alunos
-alunos_com_melhoria = df[df['student_id'].isin(alunos_com_melhoria_ids)]
+alunos_com_melhoria = df[df['id_aluno'].isin(alunos_com_melhoria_ids)]
 
-# Ordenar os dados por aluno e pela ordem das hipóteses (rn)
-alunos_com_melhoria = alunos_com_melhoria.sort_values(by=['student_id', 'rn'])
+# Ordenar os dados por aluno e pela ordem das hipóteses (num_sondagem)
+alunos_com_melhoria = alunos_com_melhoria.sort_values(by=['id_aluno', 'num_sondagem'])
 
 colunas_selecionadas = [
-    'student_id', 'nome_aluno', 'nome_turma', 'ano_turma',
+    'id_aluno', 'nome_aluno', 'nome_turma', 'ano_turma',
     'cod_inep', 'nome_escola', 'cidade_escola', 'estado_escola',
-    'nome_hipotese', 'rn', 'ordering', 'created_at'
+    'nome_hipotese', 'num_sondagem', 'ordering', 'created_at'
 ]
 
 alunos_com_melhoria_evolucao = alunos_com_melhoria[colunas_selecionadas]

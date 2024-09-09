@@ -40,6 +40,7 @@ INNER JOIN
     student s ON s.class_id = c.id  
 INNER JOIN 
     school sc ON c.cod_inep = sc.cod_inep
+WHERE t.auth_id NOT IN ('3','6','18','64','1466346', '1581795','175689','1980922','2051263','2241909','2347872','2607842','2988478','3457137','3693288','3693431','3912304','4681737','4813648','5106338','5326020','5331581','5722986','5726715','5740041', '5844577','6132779', '6183405', '6361801','6447188','6470829','6491287')
 ORDER BY
     t.id, c.id, s.id;
 '''
@@ -167,7 +168,7 @@ turmas['data_cadastro_aluno'] = pd.to_datetime(turmas['data_cadastro_aluno'])
 df_grouped = turmas.groupby(turmas['data_cadastro_professor'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
 
 with st.expander("Clique aqui para os dados das turmas cadastradas"):
-    st.dataframe(df)
+    st.dataframe(turmas)
 
 
 with st.expander("Clique aqui para os dados de contagem de turmas únicas por dia"):

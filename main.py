@@ -25,9 +25,16 @@ database = os.getenv('DB_NAME')
 connection_string = f'mysql+pymysql://{user}:{password}@{host}/{database}'
 engine = create_engine(connection_string)
 
+user_1 = os.getenv('DB_USER_DASH')
+password_1 = os.getenv('DB_PASSWORD_DASH')
+host_1 = os.getenv('DB_HOST_DASH')
+database_1 = os.getenv('DB_DATABASE_DASH')
+
+connection_string_ne = f'mysql+pymysql://{user_1}:{password_1}@{host_1}/{database_1}'
+engine_ne = create_engine(connection_string_ne)
 # ------------------------- TESTE DE CONEXÃO ---------------------------
 # try:
-#     engine = create_engine(connection_string)
+#     engine = create_engine(connection_string_cdc)
 #     connection = engine.connect()
 #     print("Conexão bem-sucedida!")
 #     connection.close()
@@ -57,10 +64,11 @@ logins_query = '''SELECT distinct
     t.created_at as data_criacao,
     t.updated_at as data_atualizacao,
     t.onboarding_completed as onboarding_completo
-FROM teacher t'''
+FROM teacher t
+WHERE t.auth_id NOT IN ('3','6','18','64','1466346', '1581795','175689','1980922','2051263','2241909','2347872','2607842','2988478','3457137','3693288','3693431','3912304','4681737','4813648','5106338','5326020','5331581','5722986','5726715','5740041','5844577','6132779', '6183405', '6361801','6447188','6470829','6491287')'''
 
 
-onboardings_query = "SELECT COUNT(t.auth_id) AS total_onboardings FROM teacher t WHERE t.onboarding_completed = 1;"
+onboardings_query = "SELECT COUNT(t.auth_id) AS total_onboardings FROM teacher t WHERE t.onboarding_completed = 1 AND t.auth_id NOT IN ('3','6','18','64','1466346', '1581795','175689','1980922','2051263','2241909','2347872','2607842','2988478','3457137','3693288','3693431','3912304','4681737','4813648','5106338','5326020','5331581','5722986','5726715','5740041','6132779', '6183405', '6361801','6447188','6470829','6491287');"
 students_query = "SELECT COUNT(distinct s.id) AS total_students FROM student s WHERE s.active = 1;"
 diagnostics_query = "SELECT COUNT(distinct da.id) AS total_diagnosis FROM diagnostic_assessment da;"	
 classes_query = "SELECT COUNT(distinct cl.id) AS total_classes FROM class cl;"
