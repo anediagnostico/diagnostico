@@ -62,7 +62,8 @@ JOIN
 JOIN 
     respostas_por_professor rp ON t.id = rp.id_professor
 WHERE 
-    qt.name = 'Onboarding' 
+    qt.name = 'Onboarding' AND
+    t.auth_id NOT IN ('3','6','18','64','1466346', '1581795','175689','1980922','2051263','2241909','2347872','2607842','2988478','3457137','3693288','3693431','3912304','4681737','4813648','5106338','5326020','5331581','5722986','5726715','5740041','6132779', '6183405', '6361801','6447188','6470829','6491287')
 ORDER BY 
     t.id, qr.created_at;'''
 
@@ -275,4 +276,106 @@ st.plotly_chart(fig3)
 with st.expander("Clique aqui para os dados dos Professores com Onboarding incompleto"):
     st.dataframe(nao_respondeu_todas)
 
+
+resumo_respostas_1 = nao_respondeu_todas.groupby(['pergunta', 'resposta']).size().reset_index(name='count')
+resumo_respostas_1['resposta_ajustada'] = resumo_respostas_1['resposta'].replace({
+    'Falta de conhecimento do que fazer após a sondagem': 'Falta de conhecimento<br>do que fazer<br>após a sondagem',
+    'Falta de conhecimento sobre sondagem': 'Falta de conhecimento<br>sobre sondagem',
+    'Falta de materiais práticos para realizar a sondagem': 'Falta de materiais<br>práticos para<br>realizar a sondagem',
+    'Falta de visibilidade do nível da turma': 'Falta de visibilidade<br>do nível da turma',
+    'Não tenho dificuldade com sondagem': 'Não tenho dificuldade<br>com sondagem'
+})
+
+
+fig4 = px.bar(
+    resumo_respostas_1[resumo_respostas_1['pergunta'] == '1) Nos últimos 6 meses, com que frequência você realizou uma sondagem com sua turma?'], 
+    x='resposta', 
+    y='count', 
+    title='1) Nos últimos 6 meses, com que frequência você realizou uma sondagem com sua turma?', 
+    height=400
+)
+
+
+fig4.update_traces(
+    texttemplate='%{y}',  
+    textposition='inside'  
+)
+
+fig4.update_layout(
+    xaxis_tickangle=0,  
+    height=600,  
+    xaxis=dict(
+        tickmode='auto',  
+        nticks=20 
+    ),
+    yaxis=dict(
+        title="Contagem de Respostas",  
+        gridcolor="LightGrey"  
+    ), 
+    bargap=0.3
+)
+
+
+
+fig5 = px.bar(
+    resumo_respostas_1[resumo_respostas_1['pergunta'] == '2) Você se sente confiante para realizar uma sondagem com a sua turma?'], 
+    x='resposta', 
+    y='count', 
+    title='2) Você se sente confiante para realizar uma sondagem com a sua turma?', 
+    labels={'resposta': 'Respostas', 'count': 'Contagem'},
+    height=400
+)
+
+
+fig5.update_traces(
+    texttemplate='%{y}',  
+    textposition='inside'  
+)
+
+fig5.update_layout(
+    xaxis_tickangle=0,  
+    height=600,  
+    xaxis=dict(
+        tickmode='auto',  
+        nticks=20 
+    ),
+    yaxis=dict(
+        title="Contagem de Respostas",  
+        gridcolor="LightGrey"  
+    ),
+    bargap=0.3
+)
+
+fig6 = px.bar(
+    resumo_respostas_1[resumo_respostas_1['pergunta'] == '3) Para você, quais os principais desafios para realizar uma sondagem?'], 
+    x='resposta_ajustada', 
+    y='count', 
+    title='3) Para você, quais os principais desafios para realizar uma sondagem?', 
+    labels={'resposta_ajustada': 'Respostas', 'count': 'Contagem'},
+    height=400
+)
+
+
+fig6.update_traces(
+    texttemplate='%{y}',  
+    textposition='inside'  
+)
+
+fig6.update_layout(
+    xaxis_tickangle=0,  
+    height=600,  
+    xaxis=dict(
+        tickmode='auto',  
+        nticks=20 
+    ),
+    yaxis=dict(
+        title="Contagem de Respostas",  
+        gridcolor="LightGrey"  
+    ),
+    bargap=0.3
+)
+
+st.plotly_chart(fig4)
+st.plotly_chart(fig5)
+st.plotly_chart(fig6)
 
