@@ -20,6 +20,14 @@ query = '''SELECT
     t.id AS id_professor,
     t.auth_id AS id_nova_escola,
     t.created_at AS data_cadastro_professor,
+    CASE 
+        WHEN t.onboarding_completed = 1 THEN 'Onboarding Completo'
+        ELSE 'Onboarding Não Completo'
+    END AS flag_onboarding,
+    CASE 
+        WHEN c.id IS NOT NULL THEN 'Tem Turma'
+        ELSE 'Sem Turma'
+    END AS flag_turma,
     c.id AS id_turma,
     c.name AS nome_turma,
     c.year AS ano_turma,
@@ -32,16 +40,15 @@ query = '''SELECT
     s.created_at AS data_cadastro_aluno
 FROM
     teacher t
-INNER JOIN
+LEFT JOIN
     class c ON t.id = c.teacher_id  
-INNER JOIN
+LEFT JOIN
     student s ON s.class_id = c.id  
-INNER JOIN 
+LEFT JOIN 
     school sc ON c.cod_inep = sc.cod_inep
-WHERE t.auth_id NOT IN ('3','6','18','64','1466346', '1581795','175689','1980922','2051263','2241909','2347872','2607842','2988478','3457137','3693288','3693431','3912304','4681737','4813648','5106338','5326020','5331581','5722986','5726715','5740041','6132779', '6183405', '6361801','6447188','6470829','6491287')
+WHERE t.auth_id NOT IN ('3','6','18','64','1466346', '1581795','5844577','5273215','6317922', '5844577','175689','1980922','2051263','2241909','2347872','2607842','2988478','3457137','3693288','3693431','3912304','4681737','4813648','5106338','5326020','5331581','5722986','5726715','5740041','6132779', '6183405', '6361801','6447188','6470829','6491287')
 ORDER BY
-    t.id, c.id, s.id;
-'''
+    t.id, c.id, s.id;'''
 
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     modify = st.sidebar.checkbox("Adicionar Filtros", key="filter_checkbox")
@@ -55,8 +62,12 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         if is_datetime64_any_dtype(df[col]):
             df[col] = df[col].dt.tz_localize(None)
 
-        if is_numeric_dtype(df[col]) and (df[col] == df[col].astype(int)).all():
-            df[col] = df[col].astype(int)
+        if is_numeric_dtype(df[col]):
+            if df[col].isnull().any():  
+                df[col] = df[col].fillna(0) 
+            if (df[col] == df[col].astype(int)).all():  
+                df[col] = df[col].astype(int)  
+
 
     modification_container = st.sidebar.container()
 
@@ -115,18 +126,18 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 df = pd.read_sql(query, engine)
 
-st.markdown("## Dados de Turmas cadastradas 🎓")
+st.markdown("## Dados de Professores")
 turmas = filter_dataframe(df)
-total_professores = turmas['id_professor'].nunique()
-total_turmas = turmas['id_turma'].nunique()
-total_alunos = turmas['id_aluno'].nunique()
+total_professores = turmas[turmas['id_professor'] != 0]['id_professor'].nunique()
+total_turmas = turmas[turmas['id_turma'] != 0]['id_turma'].nunique()
+total_alunos = turmas[turmas['id_aluno'] != 0]['id_aluno'].nunique()
 
 col1, col2, col3, col4, col5 = st.columns(5)
 
 with col3:
     st.markdown(f"""
         <div style="text-align: center;">
-            <span style="font-size: 14px;">Total de Profs<br>com Turma Cadastrada</span><br>
+            <span style="font-size: 14px;">Total Geral<br>de Professores</span><br>
             <span style="font-size: 36px; font-weight: bold;">{total_professores}</span>
         </div>
         """, unsafe_allow_html=True)
