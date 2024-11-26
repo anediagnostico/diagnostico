@@ -28,6 +28,8 @@ query = '''WITH alunos_totais AS (
         student s ON s.class_id = c.id
     INNER JOIN
         teacher t ON t.id = c.teacher_id  -- Associação entre professor e turma
+    INNER JOIN  diagnostic_assessment_students das  ON das.student_id = s.id 
+    INNER JOIN  diagnostic_assessment_type_hypothesis dh ON das.hypothesis_id = dh.id and dh.ordering > 1
     GROUP BY 
         c.id, c.name, t.id
 ),
