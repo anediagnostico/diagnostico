@@ -20,6 +20,7 @@ query = '''WITH alunos_totais AS (
     SELECT 
         c.id AS turma_id,
         c.name AS nome_turma,
+        t.created_at AS data_cadastro_professor,
         t.id AS professor_id,  -- Incluir o ID do professor
         COUNT(DISTINCT s.id) AS total_alunos
     FROM 
@@ -37,6 +38,7 @@ alunos_melhoria AS (
         c.id AS turma_id,
         c.year AS ano_turma,
         c.cod_inep AS cod_inep_turma,
+        t.created_at AS data_cadastro_professor,
         t.id AS professor_id,  
         MIN(dh.ordering) AS min_ordering,
         MAX(dh.ordering) AS max_ordering
@@ -59,6 +61,7 @@ alunos_com_melhoria AS (
         turma_id,
         ano_turma,
         cod_inep_turma,
+        data_cadastro_professor,
         professor_id,
         COUNT(aluno_id) AS alunos_com_melhoria
     FROM 
@@ -76,6 +79,7 @@ SELECT
     sc.name AS nome_escola,
     sc.municipio AS cidade_escola,
     sc.uf AS estado_escola,
+    t.data_cadastro_professor as data_cadastro_professor,
     t.professor_id as id_professor,  
     t.total_alunos,
     COALESCE(m.alunos_com_melhoria, 0) AS alunos_com_melhoria,
