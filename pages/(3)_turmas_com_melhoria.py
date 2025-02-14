@@ -38,7 +38,7 @@ alunos_melhoria AS (
         c.year AS ano_turma,
         c.cod_inep AS cod_inep_turma,
         t.id AS professor_id,  
-        das.created_at AS data_sondagem, 
+        diag.month as mes_sondagem,
         MIN(dh.ordering) AS min_ordering,
         MAX(dh.ordering) AS max_ordering
     FROM 
@@ -51,6 +51,9 @@ alunos_melhoria AS (
         teacher t ON t.id = c.teacher_id  
     INNER JOIN 
         diagnostic_assessment_type_hypothesis dh ON das.hypothesis_id = dh.id
+    INNER JOIN 
+        diagnostic_assessment diag ON dh.diagnostic_assessment_type_id = diag.diagnostic_assessment_type_id
+
     WHERE t.auth_id NOT IN ('3','6','18','64','1466346', '1581795','5844577','5273215', '6317922', '5844577','175689','1980922','2051263','2241909','2347872','2607842','2988478','3457137','3693288','3693431','3912304','4681737','4813648','5106338','5326020','5331581','5722986','5726715','5740041','6132779', '6183405', '6361801','6447188','6470829','6491287')
     GROUP BY 
         s.id, c.id, t.id
@@ -61,14 +64,14 @@ alunos_com_melhoria AS (
         ano_turma,
         cod_inep_turma,
         professor_id,
-        data_sondagem, 
+        mes_sondagem, 
         COUNT(aluno_id) AS alunos_com_melhoria
     FROM 
         alunos_melhoria
     WHERE 
         min_ordering < max_ordering  -- Filtra alunos que melhoraram de nível
     GROUP BY 
-        turma_id, professor_id, data_sondagem
+        turma_id, professor_id, mes_sondagem
 )
 SELECT 
     t.turma_id as id_turma,
@@ -82,7 +85,7 @@ SELECT
     t.total_alunos,
     COALESCE(m.alunos_com_melhoria, 0) AS alunos_com_melhoria,
     ROUND((COALESCE(m.alunos_com_melhoria, 0) / t.total_alunos) * 100, 2) AS porcentagem_melhoria,
-    m.data_sondagem AS data_sondagem
+    m.mes_sondagem AS mes_sondagem
 FROM 
     alunos_totais t
 LEFT JOIN 
