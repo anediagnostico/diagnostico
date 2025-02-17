@@ -381,7 +381,7 @@ alunos_com_melhoria = alunos_com_melhoria.sort_values(by=['id_aluno', 'num_sonda
 colunas_selecionadas = [
     'id_aluno', 'nome_aluno', 'nome_turma', 'ano_turma',
     'cod_inep', 'nome_escola', 'cidade_escola', 'estado_escola',
-    'nome_hipotese', 'num_sondagem', 'ordering', 'created_at'
+    'nome_hipotese', 'num_sondagem' #, 'ordering', 'created_at' Esta dando erro informando que essas colunas não existiam.
 ]
 
 alunos_com_melhoria_evolucao = alunos_com_melhoria[colunas_selecionadas]
