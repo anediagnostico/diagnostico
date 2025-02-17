@@ -16,11 +16,13 @@ database = os.getenv('DB_NAME')
 connection_string = f'mysql+pymysql://{user}:{password}@{host}/{database}'
 engine = create_engine(connection_string)
 
-query = '''WITH alunos_totais AS (
+query = '''
+WITH alunos_totais AS (
     SELECT 
         c.id AS turma_id,
         c.name AS nome_turma,
         t.id AS professor_id,  -- Incluir o ID do professor
+        CAST(da.month as UNSIGNED) AS mes_sondagem,
         COUNT(DISTINCT s.id) AS total_alunos
     FROM 
         class c
@@ -30,6 +32,7 @@ query = '''WITH alunos_totais AS (
         teacher t ON t.id = c.teacher_id  -- Associação entre professor e turma
     INNER JOIN  diagnostic_assessment_students das  ON das.student_id = s.id 
     INNER JOIN  diagnostic_assessment_type_hypothesis dh ON das.hypothesis_id = dh.id and dh.ordering > 1
+    INNER JOIN  diagnostic_assessment  da ON das.diagnostic_assessment_id  = da.id
     GROUP BY 
         c.id, c.name, t.id
 ),
@@ -72,7 +75,7 @@ alunos_com_melhoria AS (
     WHERE 
         min_ordering < max_ordering  -- Filtra alunos que melhoraram de nível
     GROUP BY 
-        turma_id, professor_id, mes_sondagem,
+        turma_id, professor_id, mes_sondagem
 )
 SELECT 
     t.turma_id as id_turma,
@@ -108,7 +111,8 @@ INNER JOIN
     school sc ON m.cod_inep_turma = sc.cod_inep
 
 WHERE 
-    COALESCE(m.alunos_com_melhoria, 0) > 0;'''
+    COALESCE(m.alunos_com_melhoria, 0) > 0;
+'''
 
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     modify = st.sidebar.checkbox("Adicionar Filtros", key="filter_checkbox")
