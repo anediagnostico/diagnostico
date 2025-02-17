@@ -40,6 +40,7 @@ alunos_melhoria AS (
         c.year AS ano_turma,
         c.cod_inep AS cod_inep_turma,
         t.id AS professor_id,  
+        CAST(da.month as UNSIGNED) AS mes_sondagem,
         MIN(dh.ordering) AS min_ordering,
         MAX(dh.ordering) AS max_ordering
     FROM 
@@ -52,6 +53,8 @@ alunos_melhoria AS (
         teacher t ON t.id = c.teacher_id  
     INNER JOIN 
         diagnostic_assessment_type_hypothesis dh ON das.hypothesis_id = dh.id
+    INNER JOIN 
+        diagnostic_assessment  da ON das.diagnostic_assessment_id  = da.id
     WHERE t.auth_id NOT IN ('3','6','18','64','1466346', '1581795','5844577','5273215', '6317922', '5844577','175689','1980922','2051263','2241909','2347872','2607842','2988478','3457137','3693288','3693431','3912304','4681737','4813648','5106338','5326020','5331581','5722986','5726715','5740041','6132779', '6183405', '6361801','6447188','6470829','6491287')
     GROUP BY 
         s.id, c.id, t.id
@@ -62,13 +65,14 @@ alunos_com_melhoria AS (
         ano_turma,
         cod_inep_turma,
         professor_id,
+        mes_sondagem,
         COUNT(aluno_id) AS alunos_com_melhoria
     FROM 
         alunos_melhoria
     WHERE 
         min_ordering < max_ordering  -- Filtra alunos que melhoraram de nível
     GROUP BY 
-        turma_id, professor_id
+        turma_id, professor_id, mes_sondagem,
 )
 SELECT 
     t.turma_id as id_turma,
@@ -81,7 +85,21 @@ SELECT
     t.professor_id as id_professor,  
     t.total_alunos,
     COALESCE(m.alunos_com_melhoria, 0) AS alunos_com_melhoria,
-    ROUND((COALESCE(m.alunos_com_melhoria, 0) / t.total_alunos) * 100, 2) AS porcentagem_melhoria
+    ROUND((COALESCE(m.alunos_com_melhoria, 0) / t.total_alunos) * 100, 2) AS porcentagem_melhoria,
+    CASE 
+        WHEN m.mes_sondagem = '1' THEN 'Janeiro'
+        WHEN m.mes_sondagem = '2' THEN 'Fevereiro'
+        WHEN m.mes_sondagem = '3' THEN 'Março'
+        WHEN m.mes_sondagem = '4' THEN 'Abril'
+        WHEN m.mes_sondagem = '5' THEN 'Maio'
+        WHEN m.mes_sondagem = '6' THEN 'Junho'
+        WHEN m.mes_sondagem = '7' THEN 'Julho'
+        WHEN m.mes_sondagem = '8' THEN 'Agosto'
+        WHEN m.mes_sondagem = '9' THEN 'Setembro'
+        WHEN m.mes_sondagem = '10' THEN 'Outubro'
+        WHEN m.mes_sondagem = '11' THEN 'Novembro'
+        WHEN m.mes_sondagem = '12' THEN 'Dezembro'
+    END AS mes_sondagem
 FROM 
     alunos_totais t
 LEFT JOIN 
