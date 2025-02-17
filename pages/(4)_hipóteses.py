@@ -248,7 +248,9 @@ df = pd.read_sql(query, engine)
 integer_columns = ['id_aluno', 'id_turma', 'ano_turma', 'cod_inep', 'num_sondagem']
 for col in integer_columns:
     if col in df.columns:
-        df[col] = df[col].astype(int)
+        df[col] = pd.to_numeric(df[col], errors='coerce') #Forçando conversão para número, transformando erros em NaN
+        df[col] = df[col].fillna(0).astype(int) # Aqui substituindo NaN por 0 e convertendo para inteiro
+        #df[col] = df[col].astype(int)
 
 # Função para criar o gráfico de gauge
 def criar_gauge(df_filtered, ranking_desejado):
