@@ -38,7 +38,7 @@ alunos_melhoria AS (
         c.year AS ano_turma,
         c.cod_inep AS cod_inep_turma,
         t.id AS professor_id,  
-        diag.month as mes_sondagem,
+        da.month as mes_sondagem,
         MIN(dh.ordering) AS min_ordering,
         MAX(dh.ordering) AS max_ordering
     FROM 
@@ -51,9 +51,8 @@ alunos_melhoria AS (
         teacher t ON t.id = c.teacher_id  
     INNER JOIN 
         diagnostic_assessment_type_hypothesis dh ON das.hypothesis_id = dh.id
-    INNER JOIN 
-        diagnostic_assessment diag ON dh.diagnostic_assessment_type_id = diag.diagnostic_assessment_type_id
-
+	INNER JOIN 
+		diagnostic_assessment  da ON das.diagnostic_assessment_id  = da.id
     WHERE t.auth_id NOT IN ('3','6','18','64','1466346', '1581795','5844577','5273215', '6317922', '5844577','175689','1980922','2051263','2241909','2347872','2607842','2988478','3457137','3693288','3693431','3912304','4681737','4813648','5106338','5326020','5331581','5722986','5726715','5740041','6132779', '6183405', '6361801','6447188','6470829','6491287')
     GROUP BY 
         s.id, c.id, t.id
