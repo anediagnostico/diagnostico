@@ -51,6 +51,7 @@ alunos_detalhes AS (
         s.id AS aluno_id,
         s.name AS nome_aluno,
         c.id AS turma_id,
+        c.name AS nome_turma,
         c.year AS ano_turma,
         t.id AS professor_id,
         sc.name AS nome_escola,
