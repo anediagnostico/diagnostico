@@ -39,7 +39,7 @@ alunos_melhoria AS (
         c.year AS ano_turma,
         c.cod_inep AS cod_inep_turma,
         t.id AS professor_id,  
-        da.month as mes_sondagem,
+        CAST(m.mes_sondagem AS UNSIGNED) AS mes_sondagem,
         MIN(dh.ordering) AS min_ordering,
         MAX(dh.ordering) AS max_ordering
     FROM 
@@ -85,7 +85,20 @@ SELECT
     t.total_alunos,
     COALESCE(m.alunos_com_melhoria, 0) AS alunos_com_melhoria,
     ROUND((COALESCE(m.alunos_com_melhoria, 0) / t.total_alunos) * 100, 2) AS porcentagem_melhoria,
-    m.mes_sondagem AS mes_sondagem
+    CASE 
+        WHEN m.mes_sondagem = '1' THEN 'Janeiro'
+        WHEN m.mes_sondagem = '2' THEN 'Fevereiro'
+        WHEN m.mes_sondagem = '3' THEN 'Março'
+        WHEN m.mes_sondagem = '4' THEN 'Abril'
+        WHEN m.mes_sondagem = '5' THEN 'Maio'
+        WHEN m.mes_sondagem = '6' THEN 'Junho'
+        WHEN m.mes_sondagem = '7' THEN 'Julho'
+        WHEN m.mes_sondagem = '8' THEN 'Agosto'
+        WHEN m.mes_sondagem = '9' THEN 'Setembro'
+        WHEN m.mes_sondagem = '10' THEN 'Outubro'
+        WHEN m.mes_sondagem = '11' THEN 'Novembro'
+        WHEN m.mes_sondagem = '12' THEN 'Dezembro'
+    END AS mes_sondagem
 FROM 
     alunos_totais t
 LEFT JOIN 
