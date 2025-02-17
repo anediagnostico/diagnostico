@@ -38,7 +38,7 @@ alunos_melhoria AS (
         c.year AS ano_turma,
         c.cod_inep AS cod_inep_turma,
         t.id AS professor_id,  
-        da.month as mes_sondagem,
+        CAST(da.month as UNSIGNED) AS mes_sondagem,
         MIN(dh.ordering) AS min_ordering,
         MAX(dh.ordering) AS max_ordering
     FROM 
