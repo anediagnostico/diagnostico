@@ -16,7 +16,8 @@ database = os.getenv('DB_NAME')
 connection_string = f'mysql+pymysql://{user}:{password}@{host}/{database}'
 engine = create_engine(connection_string)
 
-query = '''WITH alunos_totais AS (
+query = '''
+WITH alunos_totais AS (
     SELECT 
         c.id AS turma_id,
         c.name AS nome_turma,
@@ -38,7 +39,7 @@ alunos_melhoria AS (
         c.year AS ano_turma,
         c.cod_inep AS cod_inep_turma,
         t.id AS professor_id,  
-        CAST(da.month as UNSIGNED) AS mes_sondagem,
+        da.month as mes_sondagem,
         MIN(dh.ordering) AS min_ordering,
         MAX(dh.ordering) AS max_ordering
     FROM 
@@ -93,7 +94,8 @@ INNER JOIN
     school sc ON m.cod_inep_turma = sc.cod_inep
 
 WHERE 
-    COALESCE(m.alunos_com_melhoria, 0) > 0;'''
+    COALESCE(m.alunos_com_melhoria, 0) > 0;
+    '''
 
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     modify = st.sidebar.checkbox("Adicionar Filtros", key="filter_checkbox")
