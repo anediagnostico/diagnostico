@@ -124,7 +124,8 @@ SELECT
     rh.mes_de_aplicacao,
     rh.created_at AS data_criacao_sondagem,
     rh.updated_at AS data_atualizacao_sondagem,
-    rh.num_sondagem
+    rh.num_sondagem,
+    rh.cod_inep
 FROM 
     alunos_detalhes ad
 LEFT JOIN 
