@@ -103,6 +103,7 @@ ranked_hypotheses AS (
 )
 SELECT 
     ad.turma_id AS id_turma,
+    ad.nome_turma AS nome_turma,
     ad.ano_turma,
     ad.professor_id AS id_professor,
     ad.nome_escola,
