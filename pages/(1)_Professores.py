@@ -194,3 +194,23 @@ fig.update_layout(title='Número de Professores Cadastrados por Dia',
 
 # Exibindo o gráfico
 st.plotly_chart(fig, use_container_width=True)
+
+# Taxa de crescimento diário de professores
+df_taxa_crescimento = turmas.groupby(turmas['data_cadastro_professor'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
+df_taxa_crescimento['taxa_crescimento'] = df_taxa_crescimento['total_professores'].pct_change() * 100
+fig_taxa_crescimento = go.Figure(data=[go.Scatter(x=df_taxa_crescimento['data_cadastro_professor'], y=df_taxa_crescimento['taxa_crescimento'])])
+fig_taxa_crescimento.update_layout(title='Taxa de Crescimento Diário de Professores', xaxis_title='Data', yaxis_title='Taxa de Crescimento (%)')
+st.plotly_chart(fig_taxa_crescimento, use_container_width=True)
+
+# Número de professores ativos por dia
+df_professores_ativos = turmas.groupby(turmas['data_cadastro_professor'].dt.date)['id_professor'].nunique().reset_index(name='total_professores_ativos')
+fig_professores_ativos = go.Figure(data=[go.Bar(x=df_professores_ativos['data_cadastro_professor'], y=df_professores_ativos['total_professores_ativos'])])
+fig_professores_ativos.update_layout(title='Número de Professores Ativos por Dia', xaxis_title='Data', yaxis_title='Número de Professores Ativos')
+st.plotly_chart(fig_professores_ativos, use_container_width=True)
+
+# Tempo médio de cadastro de professores
+df_tempo_cadastro = turmas.groupby(turmas['data_cadastro_professor'].dt.date)['data_cadastro_professor'].apply(lambda x: (x.max() - x.min()).total_seconds() / 60).reset_index(name='tempo_medio_cadastro')
+fig_tempo_cadastro = go.Figure(data=[go.Bar(x=df_tempo_cadastro['data_cadastro_professor'], y=df_tempo_cadastro['tempo_medio_cadastro'])])
+fig_tempo_cadastro.update_layout(title='Tempo Médio de Cadastro de Professores', xaxis_title='Data', yaxis_title='Tempo Médio de Cadastro (minutos)')
+st.plotly_chart(fig_tempo_cadastro, use_container_width=True)
+
