@@ -182,3 +182,15 @@ with st.expander("Clique aqui para os dados das turmas cadastradas"):
 
 with st.expander("Clique aqui para os dados de contagem de turmas únicas por dia"):
     st.dataframe(df_grouped)
+
+# Adicionando gráficos de linhas com número de professores cadastrados por dia
+df_grouped = turmas.groupby(turmas['data_cadastro_professor'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
+
+# Criando o gráfico de linhas
+fig = go.Figure(data=[go.Scatter(x=df_grouped['data_cadastro_professor'], y=df_grouped['total_professores'])])
+fig.update_layout(title='Número de Professores Cadastrados por Dia',
+                   xaxis_title='Data',
+                   yaxis_title='Número de Professores')
+
+# Exibindo o gráfico
+st.plotly_chart(fig, use_container_width=True)
