@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from pandas.api.types import is_datetime64_any_dtype, is_numeric_dtype
 import plotly.graph_objs as go
+import plotly.express as px
 
 load_dotenv()
 # ------------------------- CONEXÃO COM O BANCO DE DADOS -----------------
@@ -301,3 +302,19 @@ fig_taxa_resposta.update_layout(
 
 # Exibição do gráfico
 st.plotly_chart(fig_taxa_resposta, use_container_width=True)
+
+# Filtro dos dados
+df_filtro = turmas[['porcentagem_melhoria', 'mes_sondagem', 'estado_escola']]
+
+# Criação do gráfico
+fig = px.bar(df_filtro, x='mes_sondagem', y='porcentagem_melhoria', color='estado_escola', barmode='group')
+
+# Configuração do gráfico
+fig.update_layout(
+    title='Porcentagem de Melhoria por Mês e Estado',
+    xaxis_title='Mês',
+    yaxis_title='Porcentagem de Melhoria'
+)
+
+# Exibição do gráfico
+st.plotly_chart(fig, use_container_width=True)
