@@ -285,3 +285,19 @@ df_turmas_sondagem_por_estado = turmas.groupby('estado_escola')['id_turma'].nuni
 fig_turmas_sondagem_por_estado = go.Figure(data=[go.Bar(x=df_turmas_sondagem_por_estado['estado_escola'], y=df_turmas_sondagem_por_estado['total_turmas'])])
 fig_turmas_sondagem_por_estado.update_layout(title='Número de Turmas que Realizaram Sondagem por Estado', xaxis_title='Estado', yaxis_title='Número de Turmas')
 st.plotly_chart(fig_turmas_sondagem_por_estado, use_container_width=True)
+
+# Cálculo da taxa de resposta por mês
+df_taxa_resposta = turmas.groupby('mes_sondagem')['porcentagem_melhoria'].mean().reset_index()
+
+# Criação do gráfico
+fig_taxa_resposta = go.Figure(data=[go.Scatter(x=df_taxa_resposta['mes_sondagem'], y=df_taxa_resposta['porcentagem_melhoria'])])
+
+# Configuração do gráfico
+fig_taxa_resposta.update_layout(
+    title='Taxa de Resposta de Sondagem ao Longo dos Meses',
+    xaxis_title='Mês',
+    yaxis_title='Taxa de Resposta (%)'
+)
+
+# Exibição do gráfico
+st.plotly_chart(fig_taxa_resposta, use_container_width=True)
