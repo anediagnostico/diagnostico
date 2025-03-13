@@ -283,21 +283,8 @@ fig_turmas_sondagens_diarias.update_layout(title='Número de Turmas que Realizar
 
 st.plotly_chart(fig_turmas_sondagens_diarias, use_container_width=True)
 
-# Crie um DataFrame com a contagem de turmas por estado
-df_turmas_por_estado = turmas.groupby('estado_escola').size().reset_index(name='total_turmas')
-
-# Crie um mapa
-fig_mapa = go.Figure(data=go.Choropleth(
-    locations=df_turmas_por_estado['estado_escola'], # Estados
-    z = df_turmas_por_estado['total_turmas'].astype(float), # Contagem de turmas
-    locationmode = 'BR-states', # Modo de localização (estados brasileiros)
-    colorscale = 'Reds', # Escala de cores
-    colorbar_title = "Número de Turmas" # Título da barra de cores
-))
-
-fig_mapa.update_layout(
-    title_text = 'Distribuição de Turmas por Estado',
-    geo_scope='south america', # Escopo geográfico (América do Sul)
-)
-
-st.plotly_chart(fig_mapa, use_container_width=True)
+# Turmas que realizaram sondagem por estado.
+df_turmas_sondagem_por_estado = turmas.groupby('estado_escola')['id_turma'].nunique().reset_index(name='total_turmas')
+fig_turmas_sondagem_por_estado = go.Figure(data=[go.Bar(x=df_turmas_sondagem_por_estado['estado_escola'], y=df_turmas_sondagem_por_estado['total_turmas'])])
+fig_turmas_sondagem_por_estado.update_layout(title='Número de Turmas que Realizaram Sondagem por Estado', xaxis_title='Estado', yaxis_title='Número de Turmas')
+st.plotly_chart(fig_turmas_sondagem_por_estado, use_container_width=True)
