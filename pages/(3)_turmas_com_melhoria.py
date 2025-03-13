@@ -281,7 +281,7 @@ fig_turmas_sondagens_diarias.update_layout(title='Número de Turmas que Realizar
 
 st.plotly_chart(fig_turmas_sondagens_diarias, use_container_width=True)
 
-# Turmas que realizaram sondagem por estado.
+# Turmas que realizaram sondagem por estado
 df_turmas_sondagem_por_estado = turmas.groupby('estado_escola')['id_turma'].nunique().reset_index(name='total_turmas')
 fig_turmas_sondagem_por_estado = go.Figure(data=[go.Bar(x=df_turmas_sondagem_por_estado['estado_escola'], y=df_turmas_sondagem_por_estado['total_turmas'])])
 fig_turmas_sondagem_por_estado.update_layout(title='Número de Turmas que Realizaram Sondagem por Estado', xaxis_title='Estado', yaxis_title='Número de Turmas')
