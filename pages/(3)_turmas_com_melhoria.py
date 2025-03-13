@@ -287,6 +287,24 @@ fig_turmas_sondagem_por_estado = go.Figure(data=[go.Bar(x=df_turmas_sondagem_por
 fig_turmas_sondagem_por_estado.update_layout(title='Número de Turmas que Realizaram Sondagem por Estado', xaxis_title='Estado', yaxis_title='Número de Turmas')
 st.plotly_chart(fig_turmas_sondagem_por_estado, use_container_width=True)
 
+##########################
+# Filtro dos dados
+df_filtro = turmas[['nome_turma', 'mes_sondagem', 'porcentagem_melhoria']]
+
+# Criação do gráfico
+fig = px.line(df_filtro, x='mes_sondagem', y='porcentagem_melhoria', color='nome_turma')
+
+# Configuração do gráfico
+fig.update_layout(
+    title='Taxa de Melhoria por Turma ao Longo do Tempo',
+    xaxis_title='Mês',
+    yaxis_title='Taxa de Melhoria (%)'
+)
+
+# Exibição do gráfico
+st.plotly_chart(fig, use_container_width=True)
+
+####################################################
 # Cálculo da taxa de resposta por mês
 df_taxa_resposta = turmas.groupby('mes_sondagem')['porcentagem_melhoria'].mean().reset_index()
 
