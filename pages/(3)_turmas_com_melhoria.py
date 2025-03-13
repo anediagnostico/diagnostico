@@ -8,6 +8,7 @@ import plotly.graph_objs as go
 import pydeck as pdk
 import geopandas as gpd
 
+
 load_dotenv()
 # ------------------------- CONEXÃO COM O BANCO DE DADOS -----------------
 user = os.getenv('DB_USER')
@@ -282,34 +283,21 @@ fig_turmas_sondagens_diarias.update_layout(title='Número de Turmas que Realizar
 
 st.plotly_chart(fig_turmas_sondagens_diarias, use_container_width=True)
 
+# Crie um DataFrame com a contagem de turmas por estado
+df_turmas_por_estado = turmas.groupby('estado_escola').size().reset_index(name='total_turmas')
 
-# Crie um GeoDataFrame com os dados
-gdf = gpd.GeoDataFrame(turmas, geometry=gpd.points_from_xy(turmas['cidade_escola'], turmas['estado_escola']))
+# Crie um mapa
+fig_mapa = go.Figure(data=go.Choropleth(
+    locations=df_turmas_por_estado['estado_escola'], # Estados
+    z = df_turmas_por_estado['total_turmas'].astype(float), # Contagem de turmas
+    locationmode = 'BR-states', # Modo de localização (estados brasileiros)
+    colorscale = 'Reds', # Escala de cores
+    colorbar_title = "Número de Turmas" # Título da barra de cores
+))
 
-# Geocodifique os campos cidade_escola e estado_escola
-gdf = gdf.assign(geometry=gpd.tools.geocode(gdf['cidade_escola'] + ', ' + gdf['estado_escola']))
+fig_mapa.update_layout(
+    title_text = 'Distribuição de Turmas por Estado',
+    geo_scope='south america', # Escopo geográfico (América do Sul)
+)
 
-# Crie o mapa
-layers = [
-    pdk.Layer(
-        "ScatterplotLayer",
-        gdf,
-        pickable=True,
-        opacity=0.8,
-        stroked=True,
-        filled=True,
-        radius_scale=6,
-        radius_min_pixels=1,
-        radius_max_pixels=100,
-        line_width_min_pixels=1,
-        get_position='[geometry.x, geometry.y]',
-        get_radius='total_turmas',
-        get_fill_color=[255, 140, 0], # Laranja
-        get_line_color=[0, 0, 0] # Preto
-    )
-]
-
-r = pdk.Deck(layers=layers, initial_view_state=pdk.ViewState(latitude=-14, longitude=-53, zoom=4, pitch=0))
-
-# Exiba o mapa
-st.pydeck_chart(r)
+st.plotly_chart(fig_mapa, use_container_width=True)
