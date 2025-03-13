@@ -252,3 +252,36 @@ with st.expander("Clique aqui para os dados das turmas com evidência de aprendi
 
 # total_alunos = turmas['id_aluno'].nunique()
 # st.markdown(f"#### Quantidade de alunos Únicos cadastrados: {total_alunos}")
+
+# Número de sondagens por mês
+df_sondagens_diarias = turmas.groupby(turmas['mes_sondagem']).size().reset_index(name='total_sondagens')
+df_sondagens_diarias = df_sondagens_diarias.sort_values(by='mes_sondagem')
+
+fig_sondagens_diarias = go.Figure(data=[go.Scatter(x=df_sondagens_diarias['mes_sondagem'], y=df_sondagens_diarias['total_sondagens'])])
+fig_sondagens_diarias.update_layout(title='Número de Sondagens Realizadas', xaxis_title='Mês', yaxis_title='Número de Sondagens')
+
+st.plotly_chart(fig_sondagens_diarias, use_container_width=True)
+
+# Número de professores que realizaram sondagens por mês
+df_professores_sondagens_diarias = turmas.groupby(turmas['mes_sondagem'])['id_professor'].nunique().reset_index(name='total_professores')
+df_professores_sondagens_diarias = df_professores_sondagens_diarias.sort_values(by='mes_sondagem')
+
+fig_professores_sondagens_diarias = go.Figure(data=[go.Bar(x=df_professores_sondagens_diarias['mes_sondagem'], y=df_professores_sondagens_diarias['total_professores'])])
+fig_professores_sondagens_diarias.update_layout(title='Número de Professores(únicos) que Realizaram Sondagens', xaxis_title='Mês', yaxis_title='Número de Professores')
+
+st.plotly_chart(fig_professores_sondagens_diarias, use_container_width=True)
+
+# Número de turmas que realizaram sondagens por mês
+df_turmas_sondagens_diarias = turmas.groupby(turmas['mes_sondagem'])['id_turma'].nunique().reset_index(name='total_turmas')
+df_turmas_sondagens_diarias = df_turmas_sondagens_diarias.sort_values(by='mes_sondagem')
+
+fig_turmas_sondagens_diarias = go.Figure(data=[go.Bar(x=df_turmas_sondagens_diarias['mes_sondagem'], y=df_turmas_sondagens_diarias['total_turmas'])])
+fig_turmas_sondagens_diarias.update_layout(title='Número de Turmas que Realizaram Sondagens', xaxis_title='Mês', yaxis_title='Número de Turmas')
+
+st.plotly_chart(fig_turmas_sondagens_diarias, use_container_width=True)
+
+# Turmas que realizaram sondagem por estado
+df_turmas_sondagem_por_estado = turmas.groupby('estado_escola')['id_turma'].nunique().reset_index(name='total_turmas')
+fig_turmas_sondagem_por_estado = go.Figure(data=[go.Bar(x=df_turmas_sondagem_por_estado['estado_escola'], y=df_turmas_sondagem_por_estado['total_turmas'])])
+fig_turmas_sondagem_por_estado.update_layout(title='Número de Turmas que Realizaram Sondagem por Estado', xaxis_title='Estado', yaxis_title='Número de Turmas')
+st.plotly_chart(fig_turmas_sondagem_por_estado, use_container_width=True)
