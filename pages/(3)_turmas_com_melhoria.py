@@ -258,7 +258,15 @@ df_sondagens_diarias = turmas.groupby(turmas['mes_sondagem']).size().reset_index
 df_sondagens_diarias = df_sondagens_diarias.sort_values(by='mes_sondagem')
 
 fig_sondagens_diarias = go.Figure(data=[go.Scatter(x=df_sondagens_diarias['mes_sondagem'], y=df_sondagens_diarias['total_sondagens'])])
-fig_sondagens_diarias.update_layout(title='Número de Sondagens por Dia', xaxis_title='Mês', yaxis_title='Número de Sondagens')
+fig_sondagens_diarias.update_layout(title='Número de Sondagens Realizadas', xaxis_title='Mês', yaxis_title='Número de Sondagens')
 
 st.plotly_chart(fig_sondagens_diarias, use_container_width=True)
 
+# Número de professores que realizaram sondagens por mês
+df_professores_sondagens_diarias = turmas.groupby(turmas['mes_sondagem'])['id_professor'].nunique().reset_index(name='total_professores')
+df_professores_sondagens_diarias = df_professores_sondagens_diarias.sort_values(by='mes_sondagem')
+
+fig_professores_sondagens_diarias = go.Figure(data=[go.Bar(x=df_professores_sondagens_diarias['mes_sondagem'], y=df_professores_sondagens_diarias['total_professores'])])
+fig_professores_sondagens_diarias.update_layout(title='Número de Professores que Realizaram Sondagens por Dia', xaxis_title='Mês', yaxis_title='Número de Professores')
+
+st.plotly_chart(fig_professores_sondagens_diarias, use_container_width=True)
