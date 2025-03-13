@@ -5,6 +5,8 @@ import os
 from dotenv import load_dotenv
 from pandas.api.types import is_datetime64_any_dtype, is_numeric_dtype
 import plotly.graph_objs as go
+import pydeck as pdk
+import geopandas as gpd
 
 load_dotenv()
 # ------------------------- CONEXÃO COM O BANCO DE DADOS -----------------
@@ -280,12 +282,34 @@ fig_turmas_sondagens_diarias.update_layout(title='Número de Turmas que Realizar
 
 st.plotly_chart(fig_turmas_sondagens_diarias, use_container_width=True)
 
-# Tempo médio de realização de sondagens por Mês
-df_tempo_medio_sondagens_diarias = turmas.groupby(turmas['mes_sondagem'])['tempo_realizacao'].mean().reset_index(name='tempo_medio')
-df_tempo_medio_sondagens_diarias = df_tempo_medio_sondagens_diarias.sort_values(by='mes_sondagem')
 
-fig_tempo_medio_sondagens_diarias = go.Figure(data=[go.Scatter(x=df_tempo_medio_sondagens_diarias['mes_sondagem'], y=df_tempo_medio_sondagens_diarias['tempo_medio'], mode='lines')])
+# Crie um GeoDataFrame com os dados
+gdf = gpd.GeoDataFrame(turmas, geometry=gpd.points_from_xy(turmas['cidade_escola'], turmas['estado_escola']))
 
-fig_tempo_medio_sondagens_diarias.update_layout(title='Tempo Médio de Realização de Sondagens', xaxis_title='Mês', yaxis_title='Tempo Médio (minutos)')
+# Geocodifique os campos cidade_escola e estado_escola
+gdf = gdf.assign(geometry=gpd.tools.geocode(gdf['cidade_escola'] + ', ' + gdf['estado_escola']))
 
-st.plotly_chart(fig_tempo_medio_sondagens_diarias, use_container_width=True)
+# Crie o mapa
+layers = [
+    pdk.Layer(
+        "ScatterplotLayer",
+        gdf,
+        pickable=True,
+        opacity=0.8,
+        stroked=True,
+        filled=True,
+        radius_scale=6,
+        radius_min_pixels=1,
+        radius_max_pixels=100,
+        line_width_min_pixels=1,
+        get_position='[geometry.x, geometry.y]',
+        get_radius='total_turmas',
+        get_fill_color=[255, 140, 0], # Laranja
+        get_line_color=[0, 0, 0] # Preto
+    )
+]
+
+r = pdk.Deck(layers=layers, initial_view_state=pdk.ViewState(latitude=-14, longitude=-53, zoom=4, pitch=0))
+
+# Exiba o mapa
+st.pydeck_chart(r)
