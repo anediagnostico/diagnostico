@@ -303,15 +303,20 @@ fig_taxa_resposta.update_layout(
 # Exibição do gráfico
 st.plotly_chart(fig_taxa_resposta, use_container_width=True)
 
+##########################
+
 # Filtro dos dados
-df_filtro = turmas[['porcentagem_melhoria', 'mes_sondagem', 'estado_escola']]
+df_filtro = turmas[['porcentagem_melhoria', 'estado_escola', 'mes_sondagem']]
+
+# Agrupamento dos dados
+df_grupo = df_filtro.groupby(['mes_sondagem', 'estado_escola'])['porcentagem_melhoria'].sum().reset_index()
 
 # Criação do gráfico
-fig = px.bar(df_filtro, x='mes_sondagem', y='porcentagem_melhoria', color='estado_escola', barmode='group')
+fig = px.bar(df_grupo, x='mes_sondagem', y='porcentagem_melhoria', color='estado_escola', barmode='stack')
 
 # Configuração do gráfico
 fig.update_layout(
-    title='Porcentagem de Melhoria por Mês e Estado',
+    title='Contribuição de cada Estado para a Porcentagem Total de Melhoria',
     xaxis_title='Mês',
     yaxis_title='Porcentagem de Melhoria'
 )
