@@ -252,3 +252,9 @@ with st.expander("Clique aqui para os dados das turmas com evidência de aprendi
 
 # total_alunos = turmas['id_aluno'].nunique()
 # st.markdown(f"#### Quantidade de alunos Únicos cadastrados: {total_alunos}")
+
+# Número de sondagens por dia
+df_sondagens_diarias = turmas.groupby(turmas['data_cadastro'].dt.date)['id_sondagem'].nunique().reset_index(name='total_sondagens')
+fig_sondagens_diarias = go.Figure(data=[go.Scatter(x=df_sondagens_diarias['data_cadastro'], y=df_sondagens_diarias['total_sondagens'])])
+fig_sondagens_diarias.update_layout(title='Número de Sondagens por Dia', xaxis_title='Data', yaxis_title='Número de Sondagens')
+st.plotly_chart(fig_sondagens_diarias, use_container_width=True)
