@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 from pandas.api.types import is_datetime64_any_dtype, is_numeric_dtype
 import plotly.graph_objs as go
-import pydeck as pdk
 
 load_dotenv()
 # ------------------------- CONEXÃO COM O BANCO DE DADOS -----------------
