@@ -258,7 +258,7 @@ df_sondagens_diarias = turmas.groupby(turmas['mes_sondagem']).size().reset_index
 df_sondagens_diarias = df_sondagens_diarias.sort_values(by='mes_sondagem')
 
 fig_sondagens_diarias = go.Figure(data=[go.Scatter(x=df_sondagens_diarias['mes_sondagem'], y=df_sondagens_diarias['total_sondagens'])])
-fig_sondagens_diarias.update_layout(title='Número de Sondagens Realizadas por Mês', xaxis_title='Mês', yaxis_title='Número de Sondagens')
+fig_sondagens_diarias.update_layout(title='Número de Sondagens Realizadas', xaxis_title='Mês', yaxis_title='Número de Sondagens')
 
 st.plotly_chart(fig_sondagens_diarias, use_container_width=True)
 
@@ -267,7 +267,7 @@ df_professores_sondagens_diarias = turmas.groupby(turmas['mes_sondagem'])['id_pr
 df_professores_sondagens_diarias = df_professores_sondagens_diarias.sort_values(by='mes_sondagem')
 
 fig_professores_sondagens_diarias = go.Figure(data=[go.Bar(x=df_professores_sondagens_diarias['mes_sondagem'], y=df_professores_sondagens_diarias['total_professores'])])
-fig_professores_sondagens_diarias.update_layout(title='Número de Professores(únicos) que Realizaram Sondagens por Mês', xaxis_title='Mês', yaxis_title='Número de Professores')
+fig_professores_sondagens_diarias.update_layout(title='Número de Professores(únicos) que Realizaram Sondagens', xaxis_title='Mês', yaxis_title='Número de Professores')
 
 st.plotly_chart(fig_professores_sondagens_diarias, use_container_width=True)
 
@@ -276,6 +276,16 @@ df_turmas_sondagens_diarias = turmas.groupby(turmas['mes_sondagem'])['id_turma']
 df_turmas_sondagens_diarias = df_turmas_sondagens_diarias.sort_values(by='mes_sondagem')
 
 fig_turmas_sondagens_diarias = go.Figure(data=[go.Bar(x=df_turmas_sondagens_diarias['mes_sondagem'], y=df_turmas_sondagens_diarias['total_turmas'])])
-fig_turmas_sondagens_diarias.update_layout(title='Número de Turmas que Realizaram Sondagens por Dia', xaxis_title='Mês', yaxis_title='Número de Turmas')
+fig_turmas_sondagens_diarias.update_layout(title='Número de Turmas que Realizaram Sondagens', xaxis_title='Mês', yaxis_title='Número de Turmas')
 
 st.plotly_chart(fig_turmas_sondagens_diarias, use_container_width=True)
+
+# Tempo médio de realização de sondagens por Mês
+df_tempo_medio_sondagens_diarias = turmas.groupby(turmas['mes_sondagem'])['tempo_realizacao'].mean().reset_index(name='tempo_medio')
+df_tempo_medio_sondagens_diarias = df_tempo_medio_sondagens_diarias.sort_values(by='mes_sondagem')
+
+fig_tempo_medio_sondagens_diarias = go.Figure(data=[go.Scatter(x=df_tempo_medio_sondagens_diarias['mes_sondagem'], y=df_tempo_medio_sondagens_diarias['tempo_medio'], mode='lines')])
+
+fig_tempo_medio_sondagens_diarias.update_layout(title='Tempo Médio de Realização de Sondagens', xaxis_title='Mês', yaxis_title='Tempo Médio (minutos)')
+
+st.plotly_chart(fig_tempo_medio_sondagens_diarias, use_container_width=True)
