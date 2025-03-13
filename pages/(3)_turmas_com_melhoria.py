@@ -287,30 +287,6 @@ fig_turmas_sondagem_por_estado = go.Figure(data=[go.Bar(x=df_turmas_sondagem_por
 fig_turmas_sondagem_por_estado.update_layout(title='Número de Turmas que Realizaram Sondagem por Estado', xaxis_title='Estado', yaxis_title='Número de Turmas')
 st.plotly_chart(fig_turmas_sondagem_por_estado, use_container_width=True)
 
-##########################
-# Filtro dos dados
-df_filtro = turmas[['nome_turma', 'porcentagem_melhoria']]
-
-# Ordenação dos dados
-df_ordenado = df_filtro.sort_values(by='porcentagem_melhoria', ascending=False)
-
-# Seleção das 5 melhores turmas
-df_top5 = df_ordenado.head(5)
-
-# Criação do gráfico
-fig = px.bar(df_top5, x='nome_turma', y='porcentagem_melhoria')
-
-# Configuração do gráfico
-fig.update_layout(
-    title='5 Turmas com Melhor Porcentagem de Melhoria',
-    xaxis_title='Nome da Turma',
-    yaxis_title='Porcentagem de Melhoria'
-)
-
-# Exibição do gráfico
-st.plotly_chart(fig, use_container_width=True)
-#############################
-
 # Cálculo da taxa de resposta por mês
 df_taxa_resposta = turmas.groupby('mes_sondagem')['porcentagem_melhoria'].mean().reset_index()
 
@@ -330,19 +306,23 @@ st.plotly_chart(fig_taxa_resposta, use_container_width=True)
 ##########################
 
 # Filtro dos dados
-df_filtro = turmas[['porcentagem_melhoria', 'estado_escola', 'mes_sondagem']]
+df_filtro = turmas[['porcentagem_melhoria', 'estado_escola']]
 
 # Agrupamento dos dados
-df_grupo = df_filtro.groupby(['mes_sondagem', 'estado_escola'])['porcentagem_melhoria'].sum().reset_index()
+df_grupo = df_filtro.groupby('estado_escola')['porcentagem_melhoria'].mean().reset_index()
+
+# Ordenação dos dados
+df_grupo = df_grupo.sort_values(by='porcentagem_melhoria', ascending=False)
+
+# Seleção dos 5 melhores estados
+df_top5 = df_grupo.head(5)
 
 # Criação do gráfico
-fig = px.bar(df_grupo, x='mes_sondagem', y='porcentagem_melhoria', color='estado_escola', barmode='stack')
+fig = px.pie(df_top5, values='porcentagem_melhoria', names='estado_escola')
 
 # Configuração do gráfico
 fig.update_layout(
-    title='Contribuição de cada Estado para a Porcentagem Total de Melhoria',
-    xaxis_title='Mês',
-    yaxis_title='Porcentagem de Melhoria'
+    title='5 Melhores Estados com Maior Porcentagem de Melhoria',
 )
 
 # Exibição do gráfico
