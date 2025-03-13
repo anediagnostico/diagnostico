@@ -289,22 +289,28 @@ st.plotly_chart(fig_turmas_sondagem_por_estado, use_container_width=True)
 
 ##########################
 # Filtro dos dados
-df_filtro = turmas[['nome_turma', 'mes_sondagem', 'porcentagem_melhoria']]
+df_filtro = turmas[['nome_turma', 'porcentagem_melhoria']]
+
+# Ordenação dos dados
+df_ordenado = df_filtro.sort_values(by='porcentagem_melhoria', ascending=False)
+
+# Seleção das 5 melhores turmas
+df_top5 = df_ordenado.head(5)
 
 # Criação do gráfico
-fig = px.line(df_filtro, x='mes_sondagem', y='porcentagem_melhoria', color='nome_turma')
+fig = px.bar(df_top5, x='nome_turma', y='porcentagem_melhoria')
 
 # Configuração do gráfico
 fig.update_layout(
-    title='Taxa de Melhoria por Turma ao Longo do Tempo',
-    xaxis_title='Mês',
-    yaxis_title='Taxa de Melhoria (%)'
+    title='5 Turmas com Melhor Porcentagem de Melhoria',
+    xaxis_title='Nome da Turma',
+    yaxis_title='Porcentagem de Melhoria'
 )
 
 # Exibição do gráfico
 st.plotly_chart(fig, use_container_width=True)
+#############################
 
-####################################################
 # Cálculo da taxa de resposta por mês
 df_taxa_resposta = turmas.groupby('mes_sondagem')['porcentagem_melhoria'].mean().reset_index()
 
@@ -324,24 +330,21 @@ st.plotly_chart(fig_taxa_resposta, use_container_width=True)
 ##########################
 
 # Filtro dos dados
-df_filtro = turmas[['porcentagem_melhoria', 'estado_escola']]
+df_filtro = turmas[['porcentagem_melhoria', 'estado_escola', 'mes_sondagem']]
 
 # Agrupamento dos dados
-df_grupo = df_filtro.groupby('estado_escola')['porcentagem_melhoria'].mean().reset_index()
-
-# Ordenação dos dados
-df_grupo = df_grupo.sort_values(by='porcentagem_melhoria', ascending=False)
-
-# Seleção dos 5 melhores estados
-df_top5 = df_grupo.head(5)
+df_grupo = df_filtro.groupby(['mes_sondagem', 'estado_escola'])['porcentagem_melhoria'].sum().reset_index()
 
 # Criação do gráfico
-fig = px.pie(df_top5, values='porcentagem_melhoria', names='estado_escola')
+fig = px.bar(df_grupo, x='mes_sondagem', y='porcentagem_melhoria', color='estado_escola', barmode='stack')
 
 # Configuração do gráfico
 fig.update_layout(
-    title='5 Melhores Estados com Maior Porcentagem de Melhoria',
+    title='Contribuição de cada Estado para a Porcentagem Total de Melhoria',
+    xaxis_title='Mês',
+    yaxis_title='Porcentagem de Melhoria'
 )
 
 # Exibição do gráfico
 st.plotly_chart(fig, use_container_width=True)
+
