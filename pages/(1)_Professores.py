@@ -212,7 +212,8 @@ professores_onboarding_completo = turmas[turmas['flag_onboarding'] == 'Onboardin
 taxa_onboarding_completo = (professores_onboarding_completo / total_professores) * 100
 
 fig = go.Figure(data=[go.Pie(labels=['Onboarding Completo', 'Onboarding Não Completo'],
-                                values=[professores_onboarding_completo, total_professores - professores_onboarding_completo])])
+                                values=[professores_onboarding_completo, total_professores - professores_onboarding_completo],
+                                marker_colors=['#DB7093', '#FFC5C5'])])
 
 fig.update_layout(
     title=f'Taxa de Professores com Onboarding Completo: {taxa_onboarding_completo:.2f}%',
