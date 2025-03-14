@@ -220,3 +220,22 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
+##################################################################
+
+df_alunos_por_turma = turmas.groupby('id_turma')['id_aluno'].nunique().reset_index(name='total_alunos')
+media_alunos_por_turma = df_alunos_por_turma['total_alunos'].mean()
+fig = go.Figure(data=[go.Bar(x=df_alunos_por_turma['id_turma'], y=df_alunos_por_turma['total_alunos'])])
+fig.update_layout(
+    title=f'Média de Alunos por Turma: {media_alunos_por_turma:.2f}',
+    xaxis_title='ID da Turma',
+    yaxis_title='Total de Alunos',
+    font=dict(size=14),
+    width=800,
+    height=600
+)
+st.plotly_chart(fig, use_container_width=True)
+
+##################################################################
+
+
