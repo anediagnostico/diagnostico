@@ -204,3 +204,29 @@ fig_professores_por_estado = go.Figure(data=[go.Bar(x=df_professores_por_estado[
 fig_professores_por_estado.update_layout(title='Professores Cadastrados por Estado', xaxis_title='Estado', yaxis_title='Número de Professores')
 st.plotly_chart(fig_professores_por_estado, use_container_width=True)
 
+##################################################################
+
+df_turmas_por_professor = turmas.groupby('id_professor')['id_turma'].nunique().reset_index(name='total_turmas')
+
+media_turmas_por_professor = df_turmas_por_professor['total_turmas'].mean()
+
+fig = go.Figure(data=[go.Histogram(x=df_turmas_por_professor['total_turmas'],
+                                      xbins=dict(
+                                          start=0,
+                                          end=df_turmas_por_professor['total_turmas'].max(),
+                                          size=1
+                                      ),
+                                      marker_color='#636efa',
+                                      opacity=0.7
+                                     )])
+
+fig.update_layout(
+    title=f'Distribuição de Turmas por Professor (Média: {media_turmas_por_professor:.2f})',
+    xaxis_title='Total de Turmas',
+    yaxis_title='Frequência',
+    font=dict(size=14),
+    width=800,
+    height=600
+)
+
+st.plotly_chart(fig, use_container_width=True)
