@@ -206,6 +206,24 @@ st.plotly_chart(fig_professores_por_estado, use_container_width=True)
 
 ##################################################################
 
+total_professores = turmas['id_professor'].nunique()
+professores_onboarding_completo = turmas[turmas['flag_onboarding'] == 'Onboarding Completo']['id_professor'].nunique()
+
+taxa_onboarding_completo = (professores_onboarding_completo / total_professores) * 100
+
+fig = go.Figure(data=[go.Pie(labels=['Onboarding Completo', 'Onboarding Não Completo'],
+                                values=[professores_onboarding_completo, total_professores - professores_onboarding_completo])])
+
+fig.update_layout(
+    title=f'Taxa de Professores com Onboarding Completo: {taxa_onboarding_completo:.2f}%',
+    font=dict(size=14)
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+##################################################################
+
+
 df_turmas_por_estado = turmas.groupby('estado_escola')['id_turma'].nunique().reset_index(name='total_turmas')
 
 fig = go.Figure(data=[go.Bar(x=df_turmas_por_estado['estado_escola'], y=df_turmas_por_estado['total_turmas'])])
@@ -223,23 +241,5 @@ st.plotly_chart(fig, use_container_width=True)
 
 ##################################################################
 
-df_alunos_por_turma = turmas.groupby('id_turma')['id_aluno'].nunique().reset_index(name='total_alunos')
-
-df_top_10_turmas = df_alunos_por_turma.nlargest(10, 'total_alunos')
-
-fig = go.Figure(data=[go.Bar(x=df_top_10_turmas['id_turma'], y=df_top_10_turmas['total_alunos'])])
-
-fig.update_layout(
-    title='10 Turmas com Maior Número de Alunos',
-    xaxis_title='ID da Turma',
-    yaxis_title='Total de Alunos',
-    font=dict(size=14),
-    width=800,
-    height=600
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-##################################################################
 
 
