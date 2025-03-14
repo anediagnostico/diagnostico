@@ -196,3 +196,11 @@ fig_tempo_cadastro = go.Figure(data=[go.Bar(x=df_tempo_cadastro['data_cadastro_p
 fig_tempo_cadastro.update_layout(title='Tempo Médio de Cadastro de Professores', xaxis_title='Data', yaxis_title='Tempo Médio de Cadastro (minutos)')
 st.plotly_chart(fig_tempo_cadastro, use_container_width=True)
 
+##################################################################
+
+# Professores cadastrados por estado
+df_professores_por_estado = turmas.groupby('estado_escola')['id_professor'].nunique().reset_index(name='total_professores')
+fig_professores_por_estado = go.Figure(data=[go.Bar(x=df_professores_por_estado['estado_escola'], y=df_professores_por_estado['total_professores'])])
+fig_professores_por_estado.update_layout(title='Professores Cadastrados por Estado', xaxis_title='Estado', yaxis_title='Número de Professores')
+st.plotly_chart(fig_professores_por_estado, use_container_width=True)
+
