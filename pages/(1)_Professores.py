@@ -177,8 +177,6 @@ turmas['data_cadastro_aluno'] = pd.to_datetime(turmas['data_cadastro_aluno'])
 df_grouped = turmas.groupby(turmas['data_cadastro_professor'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
 
 ##################################################################
-turmas['data_cadastro_professor'] = pd.to_datetime(turmas['data_cadastro_professor'])
-
 estado_escolha = st.multiselect(
     "Selecione o estado:",
     ["Todos"] + turmas["estado_escola"].unique().tolist()
@@ -188,8 +186,6 @@ if "Todos" in estado_escolha:
     turmas_filtradas = turmas
 else:
     turmas_filtradas = turmas[turmas["estado_escola"].isin(estado_escolha)]
-
-df_grouped = turmas_filtradas.groupby(turmas_filtradas['data_cadastro_professor'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
 
 ##################################################################
 
