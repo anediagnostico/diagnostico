@@ -179,8 +179,6 @@ df_grouped = turmas.groupby(turmas['data_cadastro_professor'].dt.date)['id_profe
 ##################################################################
 turmas['data_cadastro_aluno'] = pd.to_datetime(turmas['data_cadastro_aluno'])
 
-turmas['data_cadastro_aluno'] = pd.to_datetime(turmas['data_cadastro_aluno'])
-
 estado_escolha = st.multiselect(
     "Selecione o estado:",
     ["Todos"] + turmas["estado_escola"].unique().tolist()
