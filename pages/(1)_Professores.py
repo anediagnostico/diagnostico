@@ -177,7 +177,7 @@ turmas['data_cadastro_aluno'] = pd.to_datetime(turmas['data_cadastro_aluno'])
 df_grouped = turmas.groupby(turmas['data_cadastro_professor'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
 
 ##################################################################
-turmas['data_cadastro_aluno'] = pd.to_datetime(turmas['data_cadastro_aluno'])
+turmas['data_cadastro_professor'] = pd.to_datetime(turmas['data_cadastro_professor'])
 
 estado_escolha = st.multiselect(
     "Selecione o estado:",
