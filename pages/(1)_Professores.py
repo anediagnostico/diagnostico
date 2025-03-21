@@ -183,7 +183,7 @@ turmas['data_cadastro_aluno'] = pd.to_datetime(turmas['data_cadastro_aluno'])
 
 estado_escolha = st.multiselect(
     "Selecione o estado:",
-    ["Todos"] + turmas["estado_escola"].unique()
+    ["Todos"] + turmas["estado_escola"].unique().tolist()
 )
 
 if "Todos" in estado_escolha:
