@@ -176,6 +176,21 @@ turmas['data_cadastro_aluno'] = pd.to_datetime(turmas['data_cadastro_aluno'])
 
 df_grouped = turmas.groupby(turmas['data_cadastro_professor'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
 
+##################################################################
+turmas['data_cadastro_aluno'] = pd.to_datetime(turmas['data_cadastro_aluno'])
+
+estado_escolha = st.multiselect(
+    "Selecione o estado:",
+    turmas["estado_escola"].unique(),
+    default=turmas["estado_escola"].unique()
+)
+
+turmas_filtradas = turmas[turmas["estado_escola"].isin(estado_escolha)]
+
+df_grouped = turmas_filtradas.groupby(turmas_filtradas['data_cadastro_professor'].dt.date)['id_professor'].nunique().reset_index(name='total_professores')
+##################################################################
+
+
 with st.expander("Clique aqui para os dados das turmas cadastradas"):
     st.dataframe(turmas)
 
