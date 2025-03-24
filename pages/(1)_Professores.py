@@ -330,42 +330,39 @@ if total_professores == 0:
 ##################################################################
 
 
-df_turmas_por_estado = turmas_filtradas.groupby('estado_escola', dropna=False)['id_turma'].nunique().reset_index(name='total_turmas')
+# Turmas por estado (com tratamento de valores nulos e filtros aplicados)
+df_turmas_por_estado = turmas_filtradas.groupby('estado_escola')['id_turma'].nunique().reset_index(name='total_turmas')
 
-# Pré-processamento para evitar o erro
-df_turmas_por_estado['estado_escola'] = df_turmas_por_estado['estado_escola'].fillna('Não informado')
+# Remove linhas com estado_escola nulo antes de criar as categorias
+df_turmas_por_estado = df_turmas_por_estado.dropna(subset=['estado_escola'])
 
-# Ordenação personalizada
-estados_ordenados = ['Não informado'] + [e for e in turmas['estado_escola'].unique() if pd.notna(e)]
-df_turmas_por_estado['estado_escola'] = pd.Categorical(
-    df_turmas_por_estado['estado_escola'],
-    categories=estados_ordenados,
-    ordered=True
-)
-df_turmas_por_estado = df_turmas_por_estado.sort_values('estado_escola')
-
-# Prepara rótulos para visualização (sem modificar os dados originais)
-labels = df_turmas_por_estado['estado_escola']
-
-# Criação do gráfico
-fig = go.Figure(data=[
-    go.Bar(
-        x=labels,
-        y=df_turmas_por_estado['total_turmas'],
-        text=df_turmas_por_estado['total_turmas'],
-        textposition='auto',
-        marker_color='#1f77b4',
-        hovertemplate='<b>%{x}</b><br>Turmas: %{y}<extra></extra>'
+if not df_turmas_por_estado.empty:
+    # Ordenação personalizada (opcional)
+    estados_ordenados = turmas['estado_escola'].dropna().unique()
+    estados_presentes = [e for e in estados_ordenados if e in df_turmas_por_estado['estado_escola'].values]
+    
+    # Criação do gráfico
+    fig = go.Figure(data=[
+        go.Bar(
+            x=df_turmas_por_estado['estado_escola'],
+            y=df_turmas_por_estado['total_turmas'],
+            text=df_turmas_por_estado['total_turmas'],
+            textposition='auto',
+            marker_color='#1f77b4'
+        )
+    ])
+    
+    fig.update_layout(
+        title=f'Turmas Cadastradas por Estado (Total: {df_turmas_por_estado["total_turmas"].sum()})',
+        xaxis_title='Estado',
+        yaxis_title='Total de Turmas',
+        xaxis={'categoryorder': 'array', 'categoryarray': estados_presentes},
+        hovermode='x'
     )
-])
-fig.update_layout(
-    title=f'Turmas Cadastradas por Estado (Total: {df_turmas_por_estado["total_turmas"].sum()})',
-    xaxis_title='Estado',
-    yaxis_title='Total de Turmas',
-    xaxis={'tickangle': 45},
-    hovermode='x'
-)
-st.plotly_chart(fig, use_container_width=True)
+    
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("Nenhuma turma encontrada com os filtros selecionados ou dados disponíveis.")
 ##################################################################
 
 
