@@ -333,19 +333,22 @@ if total_professores == 0:
 # Turmas por estado
 df_turmas_por_estado = turmas_filtradas.groupby('estado_escola', dropna=False)['id_turma'].nunique().reset_index(name='total_turmas')
 
+# Tratar valores nulos antes de qualquer operação
+df_turmas_por_estado['estado_escola'] = df_turmas_por_estado['estado_escola'].fillna('Não informado')
+
 # 1. Obter a ordem dos estados a partir dos dados completos
 estados_ordenados = turmas['estado_escola'].dropna().unique().tolist()
 
 # 2. Adicionar coluna de ordenação sem usar pd.Categorical
 df_turmas_por_estado['ordem'] = df_turmas_por_estado['estado_escola'].apply(
-    lambda x: estados_ordenados.index(x) if pd.notna(x) and x in estados_ordenados else len(estados_ordenados)
+    lambda x: estados_ordenados.index(x) if x in estados_ordenados else len(estados_ordenados)
 )
 
 # 3. Ordenar o DataFrame
 df_turmas_por_estado = df_turmas_por_estado.sort_values('ordem')
 
 # 4. Criar rótulos para exibição
-df_turmas_por_estado['label_estado'] = df_turmas_por_estado['estado_escola'].fillna('Não informado')
+df_turmas_por_estado['label_estado'] = df_turmas_por_estado['estado_escola']
 
 # 5. Criar o gráfico
 fig = go.Figure(data=[
