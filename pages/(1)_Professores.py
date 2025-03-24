@@ -330,11 +330,14 @@ if total_professores == 0:
 ##################################################################
 
 
-# Turmas por estado (com filtros aplicados)
-df_turmas_por_estado = turmas_filtradas.groupby('estado_escola')['id_turma'].nunique().reset_index(name='total_turmas')
+# Turmas por estado (incluindo valores nulos)
+df_turmas_por_estado = turmas_filtradas.groupby('estado_escola', dropna=False)['id_turma'].nunique().reset_index(name='total_turmas')
 
-# Mantém a ordenação original dos estados
-estados_ordenados = [estado for estado in turmas['estado_escola'].unique() if estado in df_turmas_por_estado['estado_escola'].values]
+# Substitui NaN por "Não informado" para visualização
+df_turmas_por_estado['estado_escola'] = df_turmas_por_estado['estado_escola'].fillna('Não informado')
+
+# Ordenação personalizada (mantendo "Não informado" no final)
+estados_ordenados = [e for e in turmas['estado_escola'].dropna().unique()] + ['Não informado']
 df_turmas_por_estado['estado_escola'] = pd.Categorical(
     df_turmas_por_estado['estado_escola'],
     categories=estados_ordenados,
@@ -342,7 +345,7 @@ df_turmas_por_estado['estado_escola'] = pd.Categorical(
 )
 df_turmas_por_estado = df_turmas_por_estado.sort_values('estado_escola')
 
-# Criação do gráfico de barras
+# Criação do gráfico
 fig = go.Figure(data=[
     go.Bar(
         x=df_turmas_por_estado['estado_escola'],
@@ -358,26 +361,11 @@ fig.update_layout(
     title=f'Turmas Cadastradas por Estado (Total: {df_turmas_por_estado["total_turmas"].sum()})',
     xaxis_title='Estado',
     yaxis_title='Total de Turmas',
-    font=dict(size=12),
-    hoverlabel=dict(
-        bgcolor="white",
-        font_size=12,
-        font_family="Arial"
-    ),
-    plot_bgcolor='rgba(0,0,0,0)',
-    xaxis=dict(tickangle=45),
-    margin=dict(l=20, r=20, t=60, b=100)
+    xaxis={'tickangle': 45},
+    hovermode='x'
 )
 
-# Adiciona rótulos de dados
-fig.update_traces(texttemplate='%{text}', textposition='outside')
-
-# Mostra mensagem se não houver dados
-if df_turmas_por_estado.empty:
-    st.warning("Nenhuma turma encontrada com os filtros selecionados.")
-else:
-    st.plotly_chart(fig, use_container_width=True)
-
+st.plotly_chart(fig, use_container_width=True)
 ##################################################################
 
 
