@@ -330,39 +330,44 @@ if total_professores == 0:
 ##################################################################
 
 
-# Turmas por estado (com tratamento de valores nulos e filtros aplicados)
-df_turmas_por_estado = turmas_filtradas.groupby('estado_escola')['id_turma'].nunique().reset_index(name='total_turmas')
+# Turmas por estado
+df_turmas_por_estado = turmas_filtradas.groupby('estado_escola', dropna=False)['id_turma'].nunique().reset_index(name='total_turmas')
 
-# Remove linhas com estado_escola nulo antes de criar as categorias
-df_turmas_por_estado = df_turmas_por_estado.dropna(subset=['estado_escola'])
+# 1. Obter a ordem dos estados a partir dos dados completos
+estados_ordenados = turmas['estado_escola'].dropna().unique().tolist()
 
-if not df_turmas_por_estado.empty:
-    # Ordenação personalizada (opcional)
-    estados_ordenados = turmas['estado_escola'].dropna().unique()
-    estados_presentes = [e for e in estados_ordenados if e in df_turmas_por_estado['estado_escola'].values]
-    
-    # Criação do gráfico
-    fig = go.Figure(data=[
-        go.Bar(
-            x=df_turmas_por_estado['estado_escola'],
-            y=df_turmas_por_estado['total_turmas'],
-            text=df_turmas_por_estado['total_turmas'],
-            textposition='auto',
-            marker_color='#1f77b4'
-        )
-    ])
-    
-    fig.update_layout(
-        title=f'Turmas Cadastradas por Estado (Total: {df_turmas_por_estado["total_turmas"].sum()})',
-        xaxis_title='Estado',
-        yaxis_title='Total de Turmas',
-        xaxis={'categoryorder': 'array', 'categoryarray': estados_presentes},
-        hovermode='x'
+# 2. Adicionar coluna de ordenação sem usar pd.Categorical
+df_turmas_por_estado['ordem'] = df_turmas_por_estado['estado_escola'].apply(
+    lambda x: estados_ordenados.index(x) if pd.notna(x) and x in estados_ordenados else len(estados_ordenados)
+)
+
+# 3. Ordenar o DataFrame
+df_turmas_por_estado = df_turmas_por_estado.sort_values('ordem')
+
+# 4. Criar rótulos para exibição
+df_turmas_por_estado['label_estado'] = df_turmas_por_estado['estado_escola'].fillna('Não informado')
+
+# 5. Criar o gráfico
+fig = go.Figure(data=[
+    go.Bar(
+        x=df_turmas_por_estado['label_estado'],
+        y=df_turmas_por_estado['total_turmas'],
+        text=df_turmas_por_estado['total_turmas'],
+        textposition='auto',
+        marker_color='#1f77b4',
+        hovertemplate='<b>%{x}</b><br>Turmas: %{y}<extra></extra>'
     )
-    
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.warning("Nenhuma turma encontrada com os filtros selecionados ou dados disponíveis.")
+])
+
+fig.update_layout(
+    title=f'Turmas Cadastradas por Estado (Total: {df_turmas_por_estado["total_turmas"].sum()})',
+    xaxis_title='Estado',
+    yaxis_title='Total de Turmas',
+    xaxis={'tickangle': 45},
+    hovermode='x'
+)
+
+st.plotly_chart(fig, use_container_width=True)
 ##################################################################
 
 
