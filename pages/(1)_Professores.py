@@ -259,13 +259,19 @@ st.plotly_chart(fig_tempo_cadastro, use_container_width=True)
 # Professores cadastrados por estado
 df_professores_por_estado = turmas_filtradas.groupby('estado_escola')['id_professor'].nunique().reset_index(name='total_professores')
 
+# Garantir que não há valores nulos antes de converter em Categorical
+df_professores_por_estado['estado_escola'] = df_professores_por_estado['estado_escola'].fillna('Não informado')
+
 # Ordena pelos estados originais para manter consistência
-estados_ordenados = turmas['estado_escola'].unique()
+estados_ordenados = turmas['estado_escola'].dropna().unique().tolist()  # Remove NaN antes de criar a lista
+estados_ordenados.append("Não informado")  # Adiciona categoria extra para evitar erro
+
 df_professores_por_estado['estado_escola'] = pd.Categorical(
     df_professores_por_estado['estado_escola'],
     categories=estados_ordenados,
     ordered=True
 )
+
 df_professores_por_estado = df_professores_por_estado.sort_values('estado_escola')
 
 fig_professores_por_estado = go.Figure(
