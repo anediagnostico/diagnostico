@@ -330,25 +330,44 @@ if total_professores == 0:
 ##################################################################
 
 
-# Turmas por estado (incluindo valores nulos)
+# Turmas por estado (solução robusta com tratamento de nulos)
 df_turmas_por_estado = turmas_filtradas.groupby('estado_escola', dropna=False)['id_turma'].nunique().reset_index(name='total_turmas')
 
-# Substitui NaN por "Não informado" para visualização
-df_turmas_por_estado['estado_escola'] = df_turmas_por_estado['estado_escola'].fillna('Não informado')
+# Pré-processamento para evitar o erro
+if df_turmas_por_estado['estado_escola'].isna().any():
+    # Cria uma versão temporária com "Não informado" para a ordenação
+    temp_df = df_turmas_por_estado.copy()
+    temp_df['estado_escola'] = temp_df['estado_escola'].fillna('Não informado')
+    
+    # Ordenação personalizada
+    estados_ordenados = [e for e in turmas['estado_escola'].dropna().unique()] + ['Não informado']
+    temp_df['estado_escola'] = pd.Categorical(
+        temp_df['estado_escola'],
+        categories=estados_ordenados,
+        ordered=True
+    )
+    temp_df = temp_df.sort_values('estado_escola')
+    
+    # Mapeia a ordenação de volta para o dataframe original
+    sort_order = temp_df.index.tolist()
+    df_turmas_por_estado = df_turmas_por_estado.iloc[sort_order]
+else:
+    # Caso não haja nulos, ordena normalmente
+    estados_ordenados = turmas['estado_escola'].dropna().unique()
+    df_turmas_por_estado['estado_escola'] = pd.Categorical(
+        df_turmas_por_estado['estado_escola'],
+        categories=estados_ordenados,
+        ordered=True
+    )
+    df_turmas_por_estado = df_turmas_por_estado.sort_values('estado_escola')
 
-# Ordenação personalizada (mantendo "Não informado" no final)
-estados_ordenados = [e for e in turmas['estado_escola'].dropna().unique()] + ['Não informado']
-df_turmas_por_estado['estado_escola'] = pd.Categorical(
-    df_turmas_por_estado['estado_escola'],
-    categories=estados_ordenados,
-    ordered=True
-)
-df_turmas_por_estado = df_turmas_por_estado.sort_values('estado_escola')
+# Prepara rótulos para visualização (sem modificar os dados originais)
+labels = df_turmas_por_estado['estado_escola'].fillna('Não informado')
 
 # Criação do gráfico
 fig = go.Figure(data=[
     go.Bar(
-        x=df_turmas_por_estado['estado_escola'],
+        x=labels,
         y=df_turmas_por_estado['total_turmas'],
         text=df_turmas_por_estado['total_turmas'],
         textposition='auto',
